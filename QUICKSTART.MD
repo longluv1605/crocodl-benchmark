@@ -17,6 +17,7 @@ cd crocodl-benchmark
 ```
 conda create -n croco python=3.10 pip
 conda activate croco
+conda install -c conda-forge libstdcxx-ng
 ```
 
 We have used conda, however, you could also choose venv.
