@@ -24,14 +24,22 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_salad"
+LOCATIONS=("HYDRO")
+# LOCATIONS=("HYDRO" "SUCCULENT")
+OUTPUT_DIR="benchmarking_hydro_ios"
+# OUTPUT_DIR="benchmarking_salad"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
+# QUERIES_FILE="keyframes_pruned_subsampled.txt"
 LOCAL_FEATURE_METHOD="superpoint"
+# LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
+# MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-DEVICES_REF=("ios" "hl" "spot")
-DEVICES_QUERY=("ios" "hl" "spot")
+# GLOBAL_FEATURE_METHOD="megaloc"
+DEVICES_REF=("ios")
+# DEVICES_REF=("ios" "hl" "spot")
+DEVICES_QUERY=("ios")
+# DEVICES_QUERY=("ios" "hl" "spot")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
