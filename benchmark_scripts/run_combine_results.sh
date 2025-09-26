@@ -15,18 +15,18 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-BENCHMARKING_DIR="benchmarking_all"
+BENCHMARKING_DIR="benchmarking_superpoint_max"
 DESCRIPTION_FILE="${CAPTURE_DIR}/codabench/desc.txt"
 OUTPUT_DIR="${CAPTURE_DIR}/codabench"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc-10"
-SCENES=("hydro" "succu")
-DEVICES_MAP=("ios" "hl" "spot")
-DEVICES_QUERY=("ios" "hl" "spot")
-# SCENES=("hydro")
-# DEVICES_MAP=("ios")
-# DEVICES_QUERY=("ios")
+# SCENES=("hydro" "succu")
+# DEVICES_MAP=("ios" "hl" "spot")
+# DEVICES_QUERY=("ios" "hl" "spot")
+SCENES=("hydro")
+DEVICES_MAP=("ios")
+DEVICES_QUERY=("ios")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"

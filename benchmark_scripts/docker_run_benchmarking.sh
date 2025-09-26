@@ -24,14 +24,22 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-LOCATIONS=("HYDRO")
-OUTPUT_DIR="benchmarking_ps"
+DOCKER_SHARE_RAM=8g
+DOCKER_GPU="--gpus all"  # empty string or "--gpus all"
+LAMAR_SRC="./lamar"
+HLOC_SRC="./external/hloc"
+
+
+LOCATIONS=("SUCCULENT")
+OUTPUT_DIR="benchmarking_ml_sp_lg"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
-GLOBAL_FEATURE_METHOD="netvlad"
-DEVICES_REF=("ios" "hl" "spot")
-DEVICES_QUERY=("ios" "hl" "spot")
+GLOBAL_FEATURE_METHOD="megaloc"
+# DEVICES_REF=("ios" "hl" "spot")
+# DEVICES_QUERY=("ios" "hl" "spot")
+DEVICES_REF=("ios")
+DEVICES_QUERY=("ios")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
@@ -70,8 +78,12 @@ for LOCATION in "${LOCATIONS[@]}"; do
       fi
 
       docker run --rm \
+        $DOCKER_GPU \
         -v "$OUTPUT_DIR":/data/output_dir \
         -v "$CAPTURE":/data/capture_dir \
+        -v "$LAMAR_SRC":/lamar/lamar \
+        -v "$HLOC_SRC":/external/hloc \
+        --shm-size="$DOCKER_SHARE_RAM" \
         croco:lamar \
         python -m lamar.run \
         --scene "$SCENE" \

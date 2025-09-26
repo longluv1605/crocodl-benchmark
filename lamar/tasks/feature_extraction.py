@@ -26,11 +26,11 @@ class FeatureExtraction:
                 'model': {
                     'name': 'superpoint',
                     'nms_radius': 3,
-                    'max_keypoints': 2048,
+                    'max_keypoints': 4096,
                 },
                 'preprocessing': {
                     'grayscale': True,
-                    'resize_max': 1024,
+                    'resize_max': 1600,
                 },
             },
         },
