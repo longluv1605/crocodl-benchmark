@@ -100,6 +100,7 @@ class FeatureMatching:
             'features': extraction.config,  # detect upstream changes
             # do not include the pairs so the same file can be reused
         }
+        self.config['hloc']['model']['features'] = extraction.config['hloc']['model']['name']
             
         self.query_id = query_id
         self.ref_id = ref_id

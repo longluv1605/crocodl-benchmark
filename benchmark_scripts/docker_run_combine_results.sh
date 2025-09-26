@@ -15,12 +15,12 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-BENCHMARKING_DIR="/benchmarking_ml_sp_lg"
+BENCHMARKING_DIR="/benchmarking_ml_al_lg"
 DESCRIPTION_FILE="${CAPTURE_DIR}/codabench/desc.txt"
 OUTPUT_DIR="${CAPTURE_DIR}/codabench"
-LOCAL_FEATURE_METHOD="superpoint"
+LOCAL_FEATURE_METHOD="aliked"
 MATCHING_METHOD="lightglue"
-GLOBAL_FEATURE_METHOD="megaloc-10"
+GLOBAL_FEATURE_METHOD="megaloc"
 # SCENES=("hydro" "succu")
 # DEVICES_MAP=("ios" "hl" "spot")
 # DEVICES_QUERY=("ios" "hl" "spot")

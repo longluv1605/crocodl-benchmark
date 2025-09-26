@@ -26,16 +26,11 @@ fi
 
 LOCATIONS=("HYDRO")
 # LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_superpoint_max"
-# OUTPUT_DIR="benchmarking_salad"
+OUTPUT_DIR="benchmarking_ml_aliked_lg"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
-# QUERIES_FILE="keyframes_pruned_subsampled.txt"
-LOCAL_FEATURE_METHOD="superpoint"
-# LOCAL_FEATURE_METHOD="superpoint"
+LOCAL_FEATURE_METHOD="aliked"
 MATCHING_METHOD="lightglue"
-# MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-# GLOBAL_FEATURE_METHOD="megaloc"
 DEVICES_REF=("ios")
 # DEVICES_REF=("ios" "hl" "spot")
 DEVICES_QUERY=("ios")

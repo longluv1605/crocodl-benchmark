@@ -3,7 +3,7 @@
 ## Step 0 - Setup
 Setting up of our pipeline is similar to setting up [Lamar](https://lamar.ethz.ch/) with added dependencies. You can choose to set it up either locally, or using docker. Local installation has been tested with: Ubuntu 20.04 and Cuda 12.1.
 
-### 0.1 Installation GPU
+### 0.1 OPTION 1: Installation GPU
 
 #### 0.1.1 Clone the repository:
 
@@ -52,7 +52,7 @@ Now, additional python dependencies need to be installed. You can do this by run
 python -m pip install -e .
 ```
 
-### 0.2 Build the Docker 'lamar' stage (OPTION: if you use docker):
+### 0.2 OPTION 2: Build the Docker 'lamar' stage
 If you would like to run the benchmark code using Docker container, you simply run following command:
 
 Setup **Docker CUDA** by following this:
@@ -65,7 +65,14 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install
 docker build --target lamar -t croco:lamar -f Dockerfile ./
 ```
 
-### 0.3 Environmental variables:
+### 0.3 Update hloc source:
+
+```bash
+bash ./update_src.sh
+```
+
+
+### 0.4 Environmental variables:
 Before running any code, you should set environmental variables. You can do this with:
 
 ```bash

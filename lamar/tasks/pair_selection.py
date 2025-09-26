@@ -35,7 +35,7 @@ class PairSelectionConf(BaseConf):
         name = self.method['name']
         if name == 'fusion':
             name += '-' + '-'.join(c['name'] for c in self.method['retrieval'])
-        name += f'-{self.num_pairs}'
+        # name += f'-{self.num_pairs}'
         if self.filter_frustum.do:
             name += '_frustum'
         if self.filter_pose.do:

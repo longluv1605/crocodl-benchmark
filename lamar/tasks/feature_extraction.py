@@ -20,6 +20,22 @@ class FeatureExtractionPaths:
 
 class FeatureExtraction:
     methods = {
+        'aliked': {
+            'name': 'aliked',
+            'hloc': {
+                'model': {
+                    "name": "aliked",
+                    "model_name": "aliked-n16",
+                    "max_num_keypoints": 4096,
+                    "detection_threshold": 0.01,
+                    "nms_radius": 2,
+                },
+                'preprocessing': {
+                    'grayscale': True,
+                    'resize_max': 1024,
+                },
+            },
+        },
         'superpoint': {
             'name': 'superpoint',
             'hloc': {

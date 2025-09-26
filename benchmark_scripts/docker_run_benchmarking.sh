@@ -31,9 +31,9 @@ HLOC_SRC="./external/hloc"
 
 
 LOCATIONS=("SUCCULENT")
-OUTPUT_DIR="benchmarking_ml_sp_lg"
+OUTPUT_DIR="benchmarking_ml_al_lg"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
-LOCAL_FEATURE_METHOD="superpoint"
+LOCAL_FEATURE_METHOD="aliked"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 # DEVICES_REF=("ios" "hl" "spot")
