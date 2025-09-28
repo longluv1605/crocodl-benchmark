@@ -15,7 +15,7 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-BENCHMARKING_DIR="benchmarking_ml_aliked_lg"
+BENCHMARKING_DIR="benchmarking_sucios_ml_aliked_lg"
 DESCRIPTION_FILE="${CAPTURE_DIR}/codabench/desc.txt"
 OUTPUT_DIR="${CAPTURE_DIR}/codabench"
 LOCAL_FEATURE_METHOD="aliked"
@@ -24,7 +24,7 @@ GLOBAL_FEATURE_METHOD="megaloc"
 # SCENES=("hydro" "succu")
 # DEVICES_MAP=("ios" "hl" "spot")
 # DEVICES_QUERY=("ios" "hl" "spot")
-SCENES=("hydro")
+SCENES=("succu")
 DEVICES_MAP=("ios")
 DEVICES_QUERY=("ios")
 
@@ -40,12 +40,12 @@ echo "  Scenes: ${SCENES[@]}"
 echo "  Devices map: ${DEVICES_MAP[@]}"
 echo "  Devices query: ${DEVICES_QUERY[@]}"
 
-read -p "Do you want to continue? (y/n): " answer
+# read -p "Do you want to continue? (y/n): " answer
 
-if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-    echo "Execution aborted."
-    exit 1
-fi
+# if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+#     echo "Execution aborted."
+#     exit 1
+# fi
 
 echo "Running combine_results_crocodl with arguments locally ..."
 echo "python3 -m lamar.combine_results_crocodl \\"

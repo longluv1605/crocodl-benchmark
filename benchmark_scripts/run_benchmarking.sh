@@ -24,9 +24,9 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-LOCATIONS=("HYDRO")
+LOCATIONS=("SUCCULENT")
 # LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_ml_aliked_lg"
+OUTPUT_DIR="benchmarking_sucios_ml_aliked_lg"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
 LOCAL_FEATURE_METHOD="aliked"
 MATCHING_METHOD="lightglue"
@@ -47,12 +47,12 @@ echo "  Global feature method: ${GLOBAL_FEATURE_METHOD}"
 echo "  Reference devices: ${DEVICES_REF[@]}"
 echo "  Query devices: ${DEVICES_QUERY[@]}"
 
-read -p "Do you want to continue? (y/n): " answer
+# read -p "Do you want to continue? (y/n): " answer
 
-if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-    echo "Execution aborted."
-    exit 1
-fi
+# if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+#     echo "Execution aborted."
+#     exit 1
+# fi
 
 for LOCATION in "${LOCATIONS[@]}"; do
 

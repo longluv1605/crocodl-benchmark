@@ -52,12 +52,12 @@ echo "  Global feature method: ${GLOBAL_FEATURE_METHOD}"
 echo "  Reference devices: ${DEVICES_REF[@]}"
 echo "  Query devices: ${DEVICES_QUERY[@]}"
 
-read -p "Do you want to continue? (y/n): " answer
+# read -p "Do you want to continue? (y/n): " answer
 
-if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-    echo "Execution aborted."
-    exit 1
-fi
+# if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+#     echo "Execution aborted."
+#     exit 1
+# fi
 
 for LOCATION in "${LOCATIONS[@]}"; do
 
@@ -79,7 +79,7 @@ for LOCATION in "${LOCATIONS[@]}"; do
 
       docker run --rm \
         $DOCKER_GPU \
-        -v "$OUTPUT_DIR":/data/output_dir \
+        -v "$OUTPUT_DIR_LOCATION":/data/output_dir \
         -v "$CAPTURE":/data/capture_dir \
         -v "$LAMAR_SRC":/lamar/lamar \
         -v "$HLOC_SRC":/external/hloc \

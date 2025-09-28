@@ -25,7 +25,7 @@ class FeatureExtraction:
             'hloc': {
                 'model': {
                     "name": "aliked",
-                    "model_name": "aliked-n16",
+                    "model_name": "aliked-n32",
                     "max_num_keypoints": 4096,
                     "detection_threshold": 0.01,
                     "nms_radius": 2,
