@@ -58,13 +58,13 @@ RUN apt-get update && \
 # Install raybender.
 COPY --from=builder /raybender/embree-3.12.2/lib /raybender/embree-3.12.2/lib
 COPY --from=builder /raybender/dist-wheel /tmp/dist-wheel
-RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && python3 -m pip install $whl_path
+RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && python3 -m pip install $whl_path --no-cache-dir
 RUN rm -rfv /tmp/*
 
 # Install pcdmeshing.
 COPY --from=builder /pcdmeshing/dist-wheel /tmp/dist-wheel
 RUN apt-get install -y --no-install-recommends --no-install-suggests libmpfrc++-dev
-RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && python3 -m pip install $whl_path
+RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && python3 -m pip install $whl_path --no-cache-dir
 RUN rm -rfv /tmp/*
 
 RUN python3 -m pip install --no-deps \
@@ -87,14 +87,15 @@ RUN python3 -m pip install --no-deps \
     pyzbar==0.1.9 \
     rospkg==1.6.0 \
     h5py==3.10.0 \
-    pyquaternion==0.9.9 
+    pyquaternion==0.9.9 \
+    --no-cache-dir
 
-RUN pip install git+https://github.com/brighter-ai/redact-client.git
+RUN pip install git+https://github.com/brighter-ai/redact-client.git --no-cache-dir
 # RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cpu
-RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --extra-index-url https://download.pytorch.org/whl/cu124
-RUN python3 -m pip install bagpy==0.5
+RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --extra-index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
+RUN python3 -m pip install bagpy==0.5 --no-cache-dir
 
-RUN cd lamar && python3 -m pip install -e .[scantools] --no-deps
+RUN cd lamar && python3 -m pip install -e .[scantools] --no-deps --no-cache-dir
 WORKDIR /lamar
 
 #
@@ -118,7 +119,7 @@ RUN git clone --depth 1 -b v1.0 --recursive https://github.com/cvg/pyceres
 RUN python3 -m pip install --upgrade pip
 RUN apt-get install -y --no-install-recommends --no-install-suggests python3-dev
 RUN cd pyceres && \
-    pip wheel . --no-deps -w dist-wheel -vv && \
+    pip wheel . --no-deps -w dist-wheel -vv --no-cache-dir && \
     whl_path=$(find dist-wheel/ -name "*.whl") && \
     echo $whl_path >dist-wheel/whl_path.txt
 
@@ -144,7 +145,7 @@ COPY --from=pyceres-builder /usr/local/ /usr/local/
 # Install pyceres.
 COPY --from=pyceres-builder /pyceres/dist-wheel /tmp/dist-wheel
 RUN pip install --upgrade pip
-RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && pip install $whl_path
+RUN cd /tmp && whl_path=$(cat dist-wheel/whl_path.txt) && pip install $whl_path --no-cache-dir
 RUN rm -rfv /tmp/*
 
 #
@@ -168,8 +169,16 @@ RUN python3 -m pip install --no-deps \
     plyfile==1.0.3 \
     open3d==0.18.0 \
     pycolmap==0.4.0 \
-    scikit-learn==1.5.2
+    scikit-learn==1.5.2 \
+    --no-cache-dir
 
-RUN cd /lamar && python3 -m pip install -e . --no-deps
+RUN cd /lamar && python3 -m pip install -e . --no-deps --no-cache-dir
+
+########## Update src #########
+RUN cp update_src/aliked.py /external/hloc/hloc/extractors/aliked.py && \
+    cp update_src/extract_features.py /external/hloc/hloc/extract_features.py
+
+########## Download data ########
+RUN apt-get install git-lfs
 
 WORKDIR /lamar

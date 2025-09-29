@@ -1,6 +1,0 @@
-===============================================
-Result keys: dict_keys(['keypoints', 'descriptors', 'keypoint_scores'])
-keypoints shape: torch.Size([1, 4096, 2])
-descriptors shape: torch.Size([1, 4096, 128]) -> need permute to [1, 128, 4096]
-keypoint_scores shape: torch.Size([1, 4096])
-===============================================

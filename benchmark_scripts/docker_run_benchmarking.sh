@@ -26,9 +26,17 @@ fi
 
 DOCKER_SHARE_RAM=8g
 DOCKER_GPU="--gpus all"  # empty string or "--gpus all"
+
 LAMAR_SRC="./lamar"
 HLOC_SRC="./external/hloc"
-
+MOUNT_LAMAR_SRC=""
+MOUNT_HLOC_SRC=""
+if [ -d "$LAMAR_SRC" ]; then
+  MOUNT_LAMAR_SRC="-v $LAMAR_SRC:/lamar/lamar"
+fi
+if [ -d "$HLOC_SRC" ]; then
+  MOUNT_HLOC_SRC="-v $HLOC_SRC:/external/hloc"
+fi
 
 LOCATIONS=("SUCCULENT")
 OUTPUT_DIR="benchmarking_ml_al_lg"
@@ -79,11 +87,11 @@ for LOCATION in "${LOCATIONS[@]}"; do
 
       docker run --rm \
         $DOCKER_GPU \
+        --shm-size="$DOCKER_SHARE_RAM" \
+        $MOUNT_LAMAR_SRC \
+        $MOUNT_HLOC_SRC \
         -v "$OUTPUT_DIR_LOCATION":/data/output_dir \
         -v "$CAPTURE":/data/capture_dir \
-        -v "$LAMAR_SRC":/lamar/lamar \
-        -v "$HLOC_SRC":/external/hloc \
-        --shm-size="$DOCKER_SHARE_RAM" \
         croco:lamar \
         python -m lamar.run \
         --scene "$SCENE" \
