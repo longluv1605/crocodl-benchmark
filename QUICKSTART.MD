@@ -94,13 +94,13 @@ you can alter the path of the dataset as you wish, however, final folder has to 
 To start the benchmarking you will use the following script:
 
 ```bash
-./benchmark_scripts/run_benchmarking.sh
+./benchmark_scripts/run_benchmarking.sh > output.txt 2>&1
 ```
 
 or
 
 ```bash
-./benchmark_scripts/docker_run_benchmarking.sh
+./benchmark_scripts/docker_run_benchmarking.sh > output.txt 2>&1
 ```
 
 if you wish to run in Docker container. You can remove printing out to a `.txt` file, however, output might get too long to read in the CLI. You can either use the methods already available in lamar or implement your own. Make sure to update the flags in the `run_benchmarking.sh` script accordingly when you want to run different methods.

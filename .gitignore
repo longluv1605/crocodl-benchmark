@@ -123,3 +123,4 @@ test_reports
 capture**/
 subset**/
 capture_tree.txt
+output.txt

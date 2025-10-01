@@ -18,12 +18,12 @@ fi
 echo "You are running with parameters: "
 echo "  Output: ${OUTPUT_FILE}"
 
-read -p "Do you want to continue? (y/n): " answer
+# read -p "Do you want to continue? (y/n): " answer
 
-if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-    echo "Execution aborted."
-    exit 1
-fi
+# if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+#     echo "Execution aborted."
+#     exit 1
+# fi
 
 
 echo "Running read_benchmarking_output on $OUTPUT_FILE inside a Docker ..."

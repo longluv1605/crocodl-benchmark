@@ -1,0 +1,5 @@
+capture_dir: ./capture
+capture_subset_dir: ./capture_subset
+overwrite: true
+
+extraction_percentage: 0.1
