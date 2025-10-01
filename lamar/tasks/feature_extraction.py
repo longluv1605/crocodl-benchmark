@@ -46,7 +46,7 @@ class FeatureExtraction:
                 },
                 'preprocessing': {
                     'grayscale': True,
-                    'resize_max': 2000,
+                    'resize_max': 640,
                 },
             },
         },

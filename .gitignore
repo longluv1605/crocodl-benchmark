@@ -120,4 +120,6 @@ test_reports
 .vscode/settings.json
 .vscode/launch.json
 
-capture/
+capture**/
+subset**/
+capture_tree.txt
