@@ -7,7 +7,7 @@ CAPTURE_SUBSET_DIR=$(grep "capture_subset_dir:" "$CONFIG_FILE" | awk '{print $2}
 
 if [ -d "$CAPTURE_SUBSET_DIR" ]; then
     echo "Removing existing directory: $CAPTURE_SUBSET_DIR"
-    rm -rf "$CAPTURE_SUBSET_DIR"
+    sudo rm -rf "$CAPTURE_SUBSET_DIR"
 fi
 
 echo "Running extract_capture..."

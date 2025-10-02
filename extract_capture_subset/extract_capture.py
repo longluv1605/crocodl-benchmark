@@ -27,7 +27,7 @@ def extract_capture(config):
     for location in locations:
         if location in ['codabench']:
             ori_coda_dir = os.path.join(capture_dir, "codabench")
-            new_coda_dir = os.path.join(capture_dir, "codabench")
+            new_coda_dir = os.path.join(endpoint, "codabench")
             os.makedirs(new_coda_dir, exist_ok=True)
             
             files = os.listdir(ori_coda_dir)
@@ -36,7 +36,8 @@ def extract_capture(config):
                     src_path = os.path.join(ori_coda_dir, file)
                     dst_path = os.path.join(new_coda_dir, file)
 
-                    shutil.copytree(src_path, dst_path, symlinks=True, dirs_exist_ok=True)
+                    shutil.copy(src_path, dst_path, follow_symlinks=True)
+            print(f'DONE: {ori_coda_dir}')
             continue
         location_dir = os.path.join(capture_dir, location)
         endpoint_dir = os.path.join(endpoint, location)
