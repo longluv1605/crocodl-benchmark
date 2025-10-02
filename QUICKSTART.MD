@@ -100,6 +100,11 @@ To start the benchmarking you will use the following script:
 or
 
 ```bash
+# if use tmux:
+newgrp docker
+```
+
+```bash 
 ./benchmark_scripts/docker_run_benchmarking.sh > output.txt 2>&1
 ```
 
