@@ -2,6 +2,7 @@ import yaml
 import argparse
 from pathlib import Path
 import os
+import shutil
 
 from .scripts.extract_location import extract_location
 
@@ -25,6 +26,17 @@ def extract_capture(config):
     locations = sorted(os.listdir(capture_dir))
     for location in locations:
         if location in ['codabench']:
+            ori_coda_dir = os.path.join(capture_dir, "codabench")
+            new_coda_dir = os.path.join(capture_dir, "codabench")
+            os.makedirs(new_coda_dir, exist_ok=True)
+            
+            files = os.listdir(ori_coda_dir)
+            for file in files:
+                if file == 'desc.txt':
+                    src_path = os.path.join(ori_coda_dir, file)
+                    dst_path = os.path.join(new_coda_dir, file)
+
+                    shutil.copytree(src_path, dst_path, symlinks=True, dirs_exist_ok=True)
             continue
         location_dir = os.path.join(capture_dir, location)
         endpoint_dir = os.path.join(endpoint, location)

@@ -38,16 +38,16 @@ if [ -d "$HLOC_SRC" ]; then
   MOUNT_HLOC_SRC="-v $HLOC_SRC:/external/hloc"
 fi
 
-LOCATIONS=("SUCCULENT")
-OUTPUT_DIR="benchmarking_ml_al_lg"
+LOCATIONS=("HYDRO" "SUCCULENT")
+OUTPUT_DIR="benchmarking_docker_ml_sp_lg"
 QUERIES_FILE="keyframes_pruned_subsampled.txt"
-LOCAL_FEATURE_METHOD="aliked"
+LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-# DEVICES_REF=("ios" "hl" "spot")
-# DEVICES_QUERY=("ios" "hl" "spot")
-DEVICES_REF=("ios")
-DEVICES_QUERY=("ios")
+DEVICES_REF=("ios" "hl" "spot")
+DEVICES_QUERY=("ios" "hl" "spot")
+# DEVICES_REF=("ios")
+# DEVICES_QUERY=("ios")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
