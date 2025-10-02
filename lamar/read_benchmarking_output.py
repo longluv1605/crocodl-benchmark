@@ -113,14 +113,12 @@ def find_recall_lines(
     """
     Reads input file, finds recall lines, and if conf_matrix flag is set, prints out confusion matrices.
     """
-    print(file_path)
     if not os.path.isfile(file_path):
         print(f"Error: File '{file_path}' not found.")
         return
 
     with open(file_path, 'r') as file:
         lines = file.readlines()
-        print(lines)
 
     results = []
     new_results = []
@@ -131,7 +129,6 @@ def find_recall_lines(
             match = re.search(r'queries file:\s*(\S+)', line)
             if match:
                 queries = match.group(1)
-                print(f"{i}: {queries}")
             if new_results != []:
                 results.append({
                     'results': new_results,

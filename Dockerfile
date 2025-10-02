@@ -92,7 +92,7 @@ RUN python3 -m pip install --no-deps \
 
 RUN pip install git+https://github.com/brighter-ai/redact-client.git --no-cache-dir
 # RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cpu
-RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --extra-index-url https://download.pytorch.org/whl/cu124 --no-cache-dir
+RUN python3 -m pip install torch==2.7.1 torchvision==0.22.1 --extra-index-url https://download.pytorch.org/whl/cu128 --no-cache-dir
 RUN python3 -m pip install bagpy==0.5 --no-cache-dir
 
 RUN cd lamar && python3 -m pip install -e .[scantools] --no-deps --no-cache-dir

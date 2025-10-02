@@ -90,4 +90,6 @@ for LOCATION in "${LOCATIONS[@]}"; do
   done
 
   echo -e "Benchmarking completed for scene: $LOCATION and queries file: $QUERIES_FILE" 
+  echo ""
+  echo ""
 done
