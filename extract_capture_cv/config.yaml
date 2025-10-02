@@ -1,0 +1,4 @@
+capture_dir: ./capture
+capture_subset_dir: ./capture_cv
+
+extraction_percentage: 0.1
