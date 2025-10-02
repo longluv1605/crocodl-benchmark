@@ -28,6 +28,8 @@ echo "  Output: ${OUTPUT_FILE}"
 
 echo "Running read_benchmarking_output on $OUTPUT_FILE inside a Docker ..."
 
+cat $OUTPUT_FILE
+
 docker run --rm \
       -v "$OUTPUT_FILE":/data/output_file.txt \
       croco:lamar \
