@@ -142,6 +142,7 @@ def extract_query(map_endpoint_dir, query_endpoint_dir, ext_percent=0.3):
     extract_proc(map_endpoint_dir,  query_endpoint_dir)
     
     query_ids, query_image_paths = get_query_info(map_endpoint_dir, 'images.txt', ext_percent)
+    print(f"--> {device}_query len = {len(query_ids)}")
     
     # .TXT
     split_txt(map_endpoint_dir, query_endpoint_dir, query_ids, device)

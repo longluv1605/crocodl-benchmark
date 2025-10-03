@@ -1,6 +1,8 @@
 import os
 import math
 import shutil
+import pandas as pd
+import numpy as np
 
 
 def read_file(file_path):
@@ -15,66 +17,111 @@ def write_file(file_path, lines):
         for line in lines:
             f.write(line + '\n')
 
-def extract_subsessions(map_dir, endpoint_dir, ext_percent=0.3):
-    subsessions_path = os.path.join(map_dir, "proc/subsessions.txt")
-    save_path = os.path.join(endpoint_dir, "proc/subsessions.txt")
+def extract_proc(session_dir, map_endpoint_dir, file_name="proc/subsessions.txt"):
+    src_path = os.path.join(session_dir, file_name)
+    des_path = os.path.join(map_endpoint_dir, file_name)
     
-    subsessions = read_file(subsessions_path)
+    os.makedirs(os.path.dirname(des_path), exist_ok=True)
+    shutil.copyfile(src_path, des_path)
     
-    pos = math.ceil(len(subsessions) * ext_percent)
-    subsessions = subsessions[:pos]
-    
-    write_file(save_path, subsessions)
-            
-    return subsessions
+def sample_evenly(group, ext_percent):
+    n = len(group)
+    k = max(1, round(ext_percent * n))  # at least one
+    if k >= n:
+        return group
+    indices = np.linspace(0, n - 1, k, dtype=int)
+    return group.iloc[indices]
 
-def extract_raw_data(session, endpoint_dir, subsessions, symlinks=True):
-    raw_data_dir = os.path.join(session, "raw_data")
-    save_dir = os.path.join(endpoint_dir, "raw_data")
-
-    os.makedirs(save_dir, exist_ok=True)
-
-    raw_data_sessions = os.listdir(raw_data_dir)
-    for raw_data_session in raw_data_sessions:
-        if raw_data_session in subsessions:
-            src_path = os.path.join(raw_data_dir, raw_data_session)
-            dst_path = os.path.join(save_dir, raw_data_session)
-
-            shutil.copytree(src_path, dst_path, symlinks=symlinks, dirs_exist_ok=True)
-            
-def extract_file(map_dir, endpoint_dir, file_name, subsessions, key_index):
-    file_path = os.path.join(map_dir, file_name)
-    save_path = os.path.join(endpoint_dir, file_name)
+def get_map_info(session_dir, ext_percent=0.3):
+    file_name = 'images.txt'
+    file_path = os.path.join(session_dir, file_name)
     
-    if not os.path.exists(file_path):
-        print(file_path)
-        return
+    df = pd.read_csv(file_path, sep=", ", engine="python")
+    df['subsession'] = df['sensor_id'].apply(lambda x: x.split("/")[0])
     
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+    id_df = df[["# timestamp", "subsession"]].drop_duplicates()
+    id_df = id_df.groupby('subsession', group_keys=False).apply(lambda group: sample_evenly(group, ext_percent), include_groups=False)
+    map_ids = id_df["# timestamp"].values
     
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    with open(save_path, 'w', encoding='utf-8') as f:
-        for line in lines:
-            if line.startswith('#'):
-                f.write(line)
-                continue
-            key = line.split(', ')[key_index].split('/')[0]
-            if key not in subsessions:
-                continue
-            f.write(line)
+    # Get all image paths for the selected map IDs
+    map_df = df[df['# timestamp'].isin(map_ids)]
+    map_image_paths = map_df['image_path'].values
+    
+    return map_ids, map_image_paths
 
+def verify_line(line, map_ids, key_index, splitter="_"):
+    idx = line.split(", ")[0].split("/")[-1].split(splitter)[key_index]
+    if idx.isnumeric() and int(idx) in map_ids:
+        return True
+    if not idx.isnumeric():
+        return True
+    return False
 
-def extract_map(map_dir, endpoint_dir, ext_percent=0.3,  symlinks=True):
-    device = map_dir.split('/')[-1].split('_map')[0]
+def extract_file(session_dir, map_endpoint_dir, map_ids, file_name, key_index, splitter):
+    src_path = os.path.join(session_dir, file_name)
+    des_path = os.path.join(map_endpoint_dir, file_name)
     
-    subsessions = extract_subsessions(map_dir, endpoint_dir, ext_percent)
-    extract_raw_data(map_dir, endpoint_dir, subsessions, symlinks=symlinks)
-    extract_file(map_dir, endpoint_dir, 'images.txt', subsessions, 1)
-    extract_file(map_dir, endpoint_dir, 'sensors.txt', subsessions, 0)
-    extract_file(map_dir, endpoint_dir, 'trajectories.txt', subsessions, 1)
+    lines = []
+    ori_lines =  read_file(src_path)
+    for line in ori_lines:
+        if verify_line(line, map_ids, key_index, splitter):
+            lines.append(line)
+    
+    write_file(des_path, lines)
+    
+def extract_txt(session_dir, map_endpoint_dir, map_ids, device):
+    key_index = -1
+    splitter = "_"
+    extract_file(session_dir, map_endpoint_dir, map_ids, "images.txt", key_index=key_index, splitter=splitter)
+    extract_file(session_dir, map_endpoint_dir, map_ids, "sensors.txt", key_index=key_index, splitter=splitter)
+    extract_file(session_dir, map_endpoint_dir, map_ids, "trajectories.txt", key_index=key_index, splitter=splitter)
     
     if device in ['hl', 'spot']:
-        extract_file(map_dir, endpoint_dir, 'rigs.txt', subsessions, 1)
-    print('DONE', endpoint_dir)
+        if device == 'spot':
+            key_index = 0
+            splitter = "-"
+        extract_file(session_dir, map_endpoint_dir, map_ids, "rigs.txt", key_index=key_index, splitter=splitter)          
+
+def extract_raw(session_dir, map_endpoint_dir, map_image_paths, raw_dir="raw_data"):
+    session_raw_dir = os.path.join(session_dir, raw_dir)
+    map_raw_dir = os.path.join(map_endpoint_dir, raw_dir)
     
+    # Process each map image path directly
+    for relative_image_path in map_image_paths:
+        # Build full source path
+        source_path = os.path.join(session_raw_dir, relative_image_path)
+        dest_path = os.path.join(map_raw_dir, relative_image_path)
+        # Check if the source file exists
+        if os.path.exists(source_path):
+            # Create destination directory
+            dest_dir = os.path.dirname(dest_path)
+            os.makedirs(dest_dir, exist_ok=True)
+            
+            # Copy the file
+            shutil.copyfile(source_path, dest_path, follow_symlinks=True)
+
+def extract_map(session_dir, map_endpoint_dir, ext_percent=0.3, symlinks=True):
+    device = map_endpoint_dir.split('/')[-1].split('_map')[0]
+    '''
+    SAME: 
+        proc/subsessions.txt
+    SPLIT: by id (timestamps)
+        sensors.txt (only ios is diff)
+        images.txt
+        trajectories.txt
+        rigs.txt (for hl and spot)
+    RAW: move by id
+    '''
+    # PROC
+    extract_proc(session_dir,  map_endpoint_dir)
+    
+    map_ids, map_image_paths = get_map_info(session_dir, ext_percent)
+    print(f"--> {device}_map len = {len(map_ids)}")
+    
+    # .TXT
+    extract_txt(session_dir, map_endpoint_dir, map_ids, device)
+    
+    # RAW
+    extract_raw(session_dir, map_endpoint_dir, map_image_paths)
+    
+    print("DONE", map_endpoint_dir)

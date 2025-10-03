@@ -21,7 +21,8 @@ def load_config(path):
 def extract_capture(config):
     capture_dir = config['capture_dir']
     endpoint = config['capture_subset_dir']
-    ext_percent = config['extraction_percentage']
+    map_ep = config['map_ep']
+    query_ep = config['query_ep']
     
     locations = sorted(os.listdir(capture_dir))
     for location in locations:
@@ -42,7 +43,7 @@ def extract_capture(config):
         location_dir = os.path.join(capture_dir, location)
         endpoint_dir = os.path.join(endpoint, location)
         
-        extract_location(location_dir, endpoint_dir, ext_percent)
+        extract_location(location_dir, endpoint_dir, map_ep, query_ep)
 
 def main():
     args = parse_args()
