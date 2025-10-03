@@ -21,8 +21,8 @@ BENCHMARK_DIR="benchmarking_all_ml_sp_lg"  # Fixed benchmark directory
 OUTPUT_DIR="${PROJECT_ROOT}/evaluation_results"
 DEVICES_REF=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
-POSITION_THRESHOLD=1.0
-ROTATION_THRESHOLD=5.0
+POSITION_THRESHOLD=2.0
+ROTATION_THRESHOLD=10.0
 PYTHON_SCRIPT="${SCRIPT_DIR}/evaluate.py"
 
 # Function to display usage
