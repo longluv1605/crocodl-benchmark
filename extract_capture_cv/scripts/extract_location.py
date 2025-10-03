@@ -16,5 +16,5 @@ def extract_location(location_dir, endpoint_dir, ext_percent=0.3, symlinks=True)
         map_endpoint_dir = os.path.join(endpoint_dir, session)
         query_endpoint_dir = os.path.join(endpoint_dir, f"{session.split('_')[0]}_query")
         
-        extract_map(session_dir, map_endpoint_dir, ext_percent=ext_percent,  symlinks=symlinks)
+        extract_map(session_dir, map_endpoint_dir, ext_percent=ext_percent)
         extract_query(map_endpoint_dir, query_endpoint_dir, ext_percent)

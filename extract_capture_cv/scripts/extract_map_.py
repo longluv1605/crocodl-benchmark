@@ -71,16 +71,15 @@ def extract_txt(session_dir, map_endpoint_dir, map_ids, device):
             splitter = "-"
         extract_file(session_dir, map_endpoint_dir, map_ids, "rigs.txt", key_index=key_index, splitter=splitter)          
 
-def extract_raw(session_dir, map_endpoint_dir, map_image_paths, raw_dir="raw_data", symlinks=True):
-    raw_dir = os.path.join(session_dir, raw_dir)
+def extract_raw(session_dir, map_endpoint_dir, map_image_paths, raw_dir="raw_data"):
+    session_raw_dir = os.path.join(session_dir, raw_dir)
     map_raw_dir = os.path.join(map_endpoint_dir, raw_dir)
     
     # Process each map image path directly
     for relative_image_path in map_image_paths:
         # Build full source path
-        source_path = os.path.join(raw_dir, relative_image_path)
+        source_path = os.path.join(session_raw_dir, relative_image_path)
         dest_path = os.path.join(map_raw_dir, relative_image_path)
-        
         # Check if the source file exists
         if os.path.exists(source_path):
             # Create destination directory
@@ -88,7 +87,7 @@ def extract_raw(session_dir, map_endpoint_dir, map_image_paths, raw_dir="raw_dat
             os.makedirs(dest_dir, exist_ok=True)
             
             # Copy the file
-            shutil.copyfile(source_path, dest_path, follow_symlinks=symlinks)
+            shutil.copyfile(source_path, dest_path, follow_symlinks=True)
 
 def extract_map(session_dir, map_endpoint_dir, ext_percent=0.3, symlinks=True):
     device = map_endpoint_dir.split('/')[-1].split('_map')[0]
@@ -111,6 +110,6 @@ def extract_map(session_dir, map_endpoint_dir, ext_percent=0.3, symlinks=True):
     extract_txt(session_dir, map_endpoint_dir, map_ids, device)
     
     # RAW
-    extract_raw(session_dir, map_endpoint_dir, map_image_paths, symlinks=symlinks)
+    extract_raw(session_dir, map_endpoint_dir, map_image_paths)
     
     print("DONE", map_endpoint_dir)
