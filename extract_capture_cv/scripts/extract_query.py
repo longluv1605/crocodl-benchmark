@@ -63,7 +63,21 @@ def split_file(map_endpoint_dir, query_endpoint_dir, query_ids, file_name, key_i
                 map_lines.append(line)
     
     write_file(src_path, map_lines)            
-    write_file(des_path, query_lines)            
+    write_file(des_path, query_lines)
+    
+def split_txt(map_endpoint_dir, query_endpoint_dir, query_ids, device):
+    
+    key_index = -1
+    splitter = "_"
+    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "images.txt", key_index=key_index, splitter=splitter)
+    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "sensors.txt", key_index=key_index, splitter=splitter)
+    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "trajectories.txt", key_index=key_index, splitter=splitter)
+    
+    if device in ['hl', 'spot']:
+        if device == 'spot':
+            key_index = 0
+            splitter = "-"
+        split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "rigs.txt", key_index=key_index, splitter=splitter)          
 
 def split_raw(map_endpoint_dir, query_image_paths, raw_dir="raw_data"):
     map_raw_dir = os.path.join(map_endpoint_dir, raw_dir)
@@ -84,7 +98,34 @@ def split_raw(map_endpoint_dir, query_image_paths, raw_dir="raw_data"):
             
             # Move the file (remove from map, add to query)
             shutil.move(source_path, dest_path)
+
+def create_keyframes(query_endpoint_dir, device):
+    save_path = os.path.join(query_endpoint_dir, "proc", "keyframes_original.txt")
+
+    if device == 'ios':
+        file_name = "images.txt"
+        cols = ["# timestamp", "sensor_id"]
+    else:
+        file_name = "rigs.txt"
+        cols = ["# timestamp", "# rig_id"]
+        
+        id_index = 0 if device == 'spot' else -1
+        spt = "-" if device == 'spot' else "_"
+        
+        def f(x):
+            return x.split("/")[-1].split(spt)[id_index]
+        
+    ref_path = os.path.join(query_endpoint_dir, file_name)
+    ref = pd.read_csv(ref_path, sep=", ", engine='python')
     
+    if device != 'ios':
+        ref["# timestamp"] = ref["# rig_id"].apply(lambda x: f(x))
+        
+    res = ref[cols].drop_duplicates().copy()
+    with open(save_path, "w") as f:
+        for row in res.values:
+            f.write(", ".join(map(str, row)) + "\n")
+
 def extract_query(map_endpoint_dir, query_endpoint_dir, ext_percent=0.3):
     device = query_endpoint_dir.split('/')[-1].split('_query')[0]
     '''
@@ -100,25 +141,15 @@ def extract_query(map_endpoint_dir, query_endpoint_dir, ext_percent=0.3):
     # PROC
     extract_proc(map_endpoint_dir,  query_endpoint_dir)
     
-    # .TXT
     query_ids, query_image_paths = get_query_info(map_endpoint_dir, 'images.txt', ext_percent)
     
-    key_index = -1
-    splitter = "_"
-    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "images.txt", key_index=key_index, splitter=splitter)
-    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "sensors.txt", key_index=key_index, splitter=splitter)
-    split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "trajectories.txt", key_index=key_index, splitter=splitter)
-    
-    if device in ['hl', 'spot']:
-        if device == 'spot':
-            key_index = 0
-            splitter = "-"
-        split_file(map_endpoint_dir, query_endpoint_dir, query_ids, "rigs.txt", key_index=key_index, splitter=splitter)
+    # .TXT
+    split_txt(map_endpoint_dir, query_endpoint_dir, query_ids, device)
     
     # RAW
     split_raw(map_endpoint_dir, query_image_paths)
 
-    # keypoints
-    # create_keypoints(query_endpoint_dir, que)
+    # keyframes
+    create_keyframes(query_endpoint_dir, device)
     
     print("DONE", query_endpoint_dir)
