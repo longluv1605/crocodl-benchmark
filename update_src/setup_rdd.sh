@@ -2,8 +2,10 @@
 
 ### Setup env
 if [ ! -d "$EXTERNAL_DIR/hloc/third_party/rdd" ]; then
-    git clone https://github.com/xtcpete/rdd $EXTERNAL_DIR/hloc/third_party/rdd
+    git clone --recursive https://github.com/xtcpete/rdd $EXTERNAL_DIR/hloc/third_party/rdd
 fi
+
+cp update_src/code/lightglue_rdd.py $EXTERNAL_DIR/hloc/third_party/rdd/third_party/LightGlue/lightglue/lightglue.py
 
 cd $EXTERNAL_DIR/hloc/third_party/rdd || exit
 

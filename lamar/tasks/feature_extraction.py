@@ -25,7 +25,7 @@ class FeatureExtraction:
             'hloc': {
                 'model': {
                     'name': 'rdd',
-                    'max_keypoints': 8192,
+                    'max_keypoints': 2048,
                 },
                 'preprocessing': {
                     'grayscale': False,
