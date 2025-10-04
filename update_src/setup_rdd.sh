@@ -5,7 +5,7 @@ if [ ! -d "$EXTERNAL_DIR/hloc/third_party/rdd" ]; then
     git clone --recursive https://github.com/xtcpete/rdd $EXTERNAL_DIR/hloc/third_party/rdd
 fi
 
-pip uninstall lightglue
+pip uninstall lightglue -y
 
 cp update_src/code/lightglue_rdd.py $EXTERNAL_DIR/hloc/third_party/rdd/third_party/LightGlue/lightglue/lightglue.py
 
