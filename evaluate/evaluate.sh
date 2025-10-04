@@ -11,15 +11,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 if [ -z "$CAPTURE_DIR" ]; then
-  CAPTURE_DIR="${PROJECT_ROOT}/capture_cv"
-  echo "[INFO] Using default CAPTURE_DIR: $CAPTURE_DIR"
+  echo "[ERROR] CAPTURE_DIR env var not set. Make sure to export CAPTURE_DIR=/path/to/data/root."
+  exit 1
 fi
 
-# Configuration matching benchmark script
-LOCATIONS=("HYDRO" "SUCCULENT")
-BENCHMARK_DIR="benchmarking_all_ml_sp_lg"  # Fixed benchmark directory
-OUTPUT_DIR="${PROJECT_ROOT}/evaluation_results"
-DEVICES_REF=("ios" "hl" "spot")
+# Configuration matching benchmark script structure
+BENCHMARKING_DIR="benchmarking_all_ml_sp_lg"
+OUTPUT_DIR="${CAPTURE_DIR}/evaluation_results"
+LOCAL_FEATURE_METHOD="superpoint"
+MATCHING_METHOD="lightglue"
+GLOBAL_FEATURE_METHOD="megaloc"
+SCENES=("hydro" "succu")
+DEVICES_MAP=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
 POSITION_THRESHOLD=2.0
 ROTATION_THRESHOLD=10.0
@@ -33,7 +36,6 @@ Usage: $0 [OPTIONS]
 Cross-device pose estimation evaluation with success rate matrix analysis.
 
 OPTIONS:
-    -d, --capture_dir DIR       Path to capture directory (default: ${CAPTURE_DIR})
     -o, --output_dir DIR        Output directory for results (default: ${OUTPUT_DIR})
     -p, --position_threshold T  Position error threshold in meters (default: ${POSITION_THRESHOLD})
     -r, --rotation_threshold T  Rotation error threshold in degrees (default: ${ROTATION_THRESHOLD})
@@ -61,10 +63,6 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -d|--capture_dir)
-            CAPTURE_DIR="$2"
-            shift 2
-            ;;
         -o|--output_dir)
             OUTPUT_DIR="$2"
             shift 2
@@ -109,19 +107,18 @@ python3 -c "import numpy, pandas; print('Dependencies OK')" 2>/dev/null || {
     exit 1
 }
 
-# Display configuration
-echo "=============================================="
-echo "Cross-device Pose Estimation Evaluation"
-echo "=============================================="
-echo "Capture directory: $CAPTURE_DIR"
-echo "Benchmark directory: $BENCHMARK_DIR"
-echo "Locations: ${LOCATIONS[@]}"
-echo "Reference devices: ${DEVICES_REF[@]}"
-echo "Query devices: ${DEVICES_QUERY[@]}"
-echo "Output directory: $OUTPUT_DIR"
-echo "Position threshold: $POSITION_THRESHOLD meters"
-echo "Rotation threshold: $ROTATION_THRESHOLD degrees"
-echo "=============================================="
+echo "You are running with parameters: "
+echo "  Capture: ${CAPTURE_DIR}"
+echo "  Output: ${OUTPUT_DIR}"
+echo "  Benchmarking dir: ${BENCHMARKING_DIR}"
+echo "  Local feature method: ${LOCAL_FEATURE_METHOD}"
+echo "  Matching method: ${MATCHING_METHOD}"
+echo "  Global feature method: ${GLOBAL_FEATURE_METHOD}"
+echo "  Scenes: ${SCENES[@]}"
+echo "  Devices map: ${DEVICES_MAP[@]}"
+echo "  Devices query: ${DEVICES_QUERY[@]}"
+echo "  Position threshold: ${POSITION_THRESHOLD} meters"
+echo "  Rotation threshold: ${ROTATION_THRESHOLD} degrees"
 
 # Create output directory
 mkdir -p "$OUTPUT_DIR"
@@ -131,11 +128,16 @@ echo "Running evaluation..."
 python3 "$PYTHON_SCRIPT" \
     --capture_dir "$CAPTURE_DIR" \
     --output_dir "$OUTPUT_DIR" \
+    --benchmarking_dir "$BENCHMARKING_DIR" \
+    --local_feature_method "$LOCAL_FEATURE_METHOD" \
+    --matching_method "$MATCHING_METHOD" \
+    --global_feature_method "$GLOBAL_FEATURE_METHOD" \
+    --scenes "${SCENES[@]}" \
+    --devices_map "${DEVICES_MAP[@]}" \
+    --devices_query "${DEVICES_QUERY[@]}" \
     --position_threshold "$POSITION_THRESHOLD" \
     --rotation_threshold "$ROTATION_THRESHOLD"
 
 echo ""
-echo "=============================================="
 echo "Evaluation completed!"
-echo "Results saved to: $OUTPUT_DIR/$BENCHMARK_DIR"
-echo "=============================================="
+echo "Results saved to: $OUTPUT_DIR"

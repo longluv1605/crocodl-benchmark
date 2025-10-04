@@ -26,6 +26,17 @@ line using their name. Each is a dictionary with the following entries:
     - preprocessing: how to preprocess the images read from disk.
 '''
 confs = {
+    'rdd': {
+        'output': 'feats-rdd',
+        'model': {
+            'name': 'rdd',
+            'max_keypoints': 8192,
+        },
+        'preprocessing': {
+            'grayscale': False,
+            'resize_max': 1024,
+        },  
+    },
     'aliked_long': {
         'output': 'feats-aliked-n4096-dt001',
         'model': {

@@ -175,8 +175,7 @@ RUN python3 -m pip install --no-deps \
 RUN cd /lamar && python3 -m pip install -e . --no-deps --no-cache-dir
 
 ########## Update src #########
-RUN cp update_src/aliked.py /external/hloc/hloc/extractors/aliked.py && \
-    cp update_src/extract_features.py /external/hloc/hloc/extract_features.py
+RUN bash update_src/docker_update_src.sh
 
 ########## Download data ########
 RUN apt-get install git-lfs

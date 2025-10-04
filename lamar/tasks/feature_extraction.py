@@ -20,6 +20,19 @@ class FeatureExtractionPaths:
 
 class FeatureExtraction:
     methods = {
+        'rdd': {
+            'name': 'rdd',
+            'hloc': {
+                'model': {
+                    'name': 'rdd',
+                    'max_keypoints': 8192,
+                },
+                'preprocessing': {
+                    'grayscale': False,
+                    'resize_max': 1024,
+                },  
+            },
+        },
         'aliked': {
             'name': 'aliked',
             'hloc': {

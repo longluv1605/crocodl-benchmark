@@ -12,10 +12,10 @@ import pandas as pd
 from pathlib import Path
 from collections import defaultdict
 
-# Configuration
-DEVICES = ['ios', 'hl', 'spot']
-LOCATIONS = ['HYDRO', 'SUCCULENT']
-BENCHMARK_DIR = 'benchmarking_all_ml_sp_lg'  # Fixed benchmark directory
+# Default configuration (will be overridden by command line arguments)
+DEFAULT_DEVICES = ['ios', 'hl', 'spot']
+DEFAULT_SCENES = ['hydro', 'succu']
+DEFAULT_BENCHMARKING_DIR = 'benchmarking_all_ml_sp_lg'
 
 def load_poses_file(file_path):
     """Load poses from trajectories.txt or poses.txt file."""
@@ -81,24 +81,30 @@ def compute_pose_error(gt_pose, est_pose):
     
     return pos_error, angle_deg
 
-def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_threshold, rot_threshold):
+def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_threshold, rot_threshold, 
+                        benchmarking_dir, local_feature_method, matching_method, global_feature_method):
     """Evaluate a single query-map device pair for a location."""
     print(f"Evaluating {location}: {query_device} query vs {map_device} map")
     
+    # Convert scene name to proper location name
+    if location == "succu":
+        location_path = "SUCCULENT"
+    else:
+        location_path = location.upper()
+    
     # Load ground truth trajectories
-    gt_file = f"{capture_dir}/{location}/sessions/{query_device}_query/trajectories.txt"
+    gt_file = f"{capture_dir}/{location_path}/sessions/{query_device}_query/trajectories.txt"
     gt_poses = load_poses_file(gt_file)
     
-    # Load estimated poses
-    pose_dir = f"{capture_dir}/{location}/{BENCHMARK_DIR}/pose_estimation/{query_device}_query/{map_device}_map"
-    estimated_poses = {}
+    # Build path to estimated poses based on method configuration
+    if query_device == "ios":
+        device_type = "single_image"
+    else:
+        device_type = "rig"
     
-    # Search for poses.txt in all subdirectories
-    for root, dirs, files in os.walk(pose_dir):
-        if 'poses.txt' in files:
-            poses_file = os.path.join(root, 'poses.txt')
-            poses = load_poses_file(poses_file)
-            estimated_poses.update(poses)  # Merge all found poses
+    pose_dir = f"{capture_dir}/{location_path}/{benchmarking_dir}/pose_estimation/{query_device}_query/{map_device}_map/{local_feature_method}/{matching_method}/{global_feature_method}/triangulation/{device_type}"
+    poses_file = f"{pose_dir}/poses.txt"
+    estimated_poses = load_poses_file(poses_file)
     
     # Compare poses
     total_gt = len(gt_poses)
@@ -133,27 +139,30 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
         'success_rate': success_rate
     }
 
-def compute_success_rate_matrices(capture_dir, pos_threshold=1.0, rot_threshold=5.0):
+def compute_success_rate_matrices(capture_dir, scenes, devices_map, devices_query, pos_threshold=1.0, rot_threshold=5.0,
+                                benchmarking_dir=DEFAULT_BENCHMARKING_DIR, local_feature_method="superpoint", 
+                                matching_method="lightglue", global_feature_method="megaloc"):
     """Compute success rate matrices for all locations and overall."""
     location_results = {}
     
-    # Process each location
-    for location in LOCATIONS:
-        print(f"\nProcessing location: {location}")
+    # Process each scene
+    for scene in scenes:
+        print(f"\nProcessing scene: {scene}")
         location_matrix = {}
         location_details = {}
         
-        for query_device in DEVICES:
+        for query_device in devices_query:
             location_matrix[query_device] = {}
-            for map_device in DEVICES:
+            for map_device in devices_map:
                 result = evaluate_device_pair(
-                    capture_dir, location, query_device, map_device, 
-                    pos_threshold, rot_threshold
+                    capture_dir, scene, query_device, map_device, 
+                    pos_threshold, rot_threshold, benchmarking_dir,
+                    local_feature_method, matching_method, global_feature_method
                 )
                 location_matrix[query_device][map_device] = result['success_rate']
                 location_details[f"{query_device}_vs_{map_device}"] = result
         
-        location_results[location] = {
+        location_results[scene] = {
             'matrix': location_matrix,
             'details': location_details
         }
@@ -163,17 +172,17 @@ def compute_success_rate_matrices(capture_dir, pos_threshold=1.0, rot_threshold=
     overall_matrix = {}
     overall_details = {}
     
-    for query_device in DEVICES:
+    for query_device in devices_query:
         overall_matrix[query_device] = {}
-        for map_device in DEVICES:
+        for map_device in devices_map:
             # Aggregate across locations
             total_gt = 0
             total_successful = 0
             
-            for location in LOCATIONS:
+            for scene in scenes:
                 detail_key = f"{query_device}_vs_{map_device}"
-                if detail_key in location_results[location]['details']:
-                    detail = location_results[location]['details'][detail_key]
+                if detail_key in location_results[scene]['details']:
+                    detail = location_results[scene]['details'][detail_key]
                     total_gt += detail['total_gt_poses']
                     total_successful += detail['successful_poses']
             
@@ -192,7 +201,7 @@ def compute_success_rate_matrices(capture_dir, pos_threshold=1.0, rot_threshold=
     
     return location_results, overall_results
 
-def print_success_matrix(matrix, title):
+def print_success_matrix(matrix, title, devices_map, devices_query):
     """Print success rate matrix in a formatted way."""
     print(f"\n{title}")
     print("-" * len(title))
@@ -200,20 +209,20 @@ def print_success_matrix(matrix, title):
     # Header
     header_text = "Query\\Map"
     print(f"{header_text:<12}", end="")
-    for map_device in DEVICES:
+    for map_device in devices_map:
         print(f"{map_device.upper():<12}", end="")
     print()
-    print("-" * (12 + 12 * len(DEVICES)))
+    print("-" * (12 + 12 * len(devices_map)))
     
     # Rows
-    for query_device in DEVICES:
+    for query_device in devices_query:
         print(f"{query_device.upper():<12}", end="")
-        for map_device in DEVICES:
+        for map_device in devices_map:
             rate = matrix[query_device][map_device]
             print(f"{rate:>8.2f}%   ", end="")
         print()
 
-def save_results(location_results, overall_results, output_dir):
+def save_results(location_results, overall_results, output_dir, devices_map, devices_query):
     """Save evaluation results to files."""
     os.makedirs(output_dir, exist_ok=True)
     
@@ -227,9 +236,9 @@ def save_results(location_results, overall_results, output_dir):
     # Save CSV matrices
     for location, data in location_results.items():
         matrix_data = []
-        for query_device in DEVICES:
+        for query_device in devices_query:
             row = {'Query_Device': query_device.upper()}
-            for map_device in DEVICES:
+            for map_device in devices_map:
                 row[f'{map_device.upper()}_Map'] = f"{data['matrix'][query_device][map_device]:.2f}%"
             matrix_data.append(row)
         
@@ -238,9 +247,9 @@ def save_results(location_results, overall_results, output_dir):
     
     # Overall success matrix CSV
     overall_matrix_data = []
-    for query_device in DEVICES:
+    for query_device in devices_query:
         row = {'Query_Device': query_device.upper()}
-        for map_device in DEVICES:
+        for map_device in devices_map:
             row[f'{map_device.upper()}_Map'] = f"{overall_results['matrix'][query_device][map_device]:.2f}%"
         overall_matrix_data.append(row)
     
@@ -253,29 +262,59 @@ def main():
                         help='Path to capture directory (contains HYDRO, SUCCULENT)')
     parser.add_argument('--output_dir', type=str, default='./evaluation_results',
                         help='Output directory for results')
-    parser.add_argument('--position_threshold', type=float, default=1.0,
-                        help='Position error threshold in meters (default: 1.0)')
-    parser.add_argument('--rotation_threshold', type=float, default=5.0,
-                        help='Rotation error threshold in degrees (default: 5.0)')
+    parser.add_argument('--benchmarking_dir', type=str, default=DEFAULT_BENCHMARKING_DIR,
+                        help='Benchmarking directory name')
+    parser.add_argument('--local_feature_method', type=str, default='superpoint',
+                        help='Local feature method')
+    parser.add_argument('--matching_method', type=str, default='lightglue',
+                        help='Matching method')
+    parser.add_argument('--global_feature_method', type=str, default='megaloc',
+                        help='Global feature method')
+    parser.add_argument('--scenes', nargs='+', default=DEFAULT_SCENES,
+                        help='Scenes to evaluate')
+    parser.add_argument('--devices_map', nargs='+', default=DEFAULT_DEVICES,
+                        help='Map devices')
+    parser.add_argument('--devices_query', nargs='+', default=DEFAULT_DEVICES,
+                        help='Query devices')
+    parser.add_argument('--position_threshold', type=float, default=2.0,
+                        help='Position error threshold in meters (default: 2.0)')
+    parser.add_argument('--rotation_threshold', type=float, default=10.0,
+                        help='Rotation error threshold in degrees (default: 10.0)')
     
     args = parser.parse_args()
     
     print("Starting cross-device pose estimation evaluation")
+    print(f"Configuration:")
+    print(f"  Capture dir: {args.capture_dir}")
+    print(f"  Benchmarking dir: {args.benchmarking_dir}")
+    print(f"  Local feature method: {args.local_feature_method}")
+    print(f"  Matching method: {args.matching_method}")
+    print(f"  Global feature method: {args.global_feature_method}")
+    print(f"  Scenes: {args.scenes}")
+    print(f"  Map devices: {args.devices_map}")
+    print(f"  Query devices: {args.devices_query}")
+    print(f"  Position threshold: {args.position_threshold}")
+    print(f"  Rotation threshold: {args.rotation_threshold}")
     
     # Compute success rate matrices
     location_results, overall_results = compute_success_rate_matrices(
-        args.capture_dir, args.position_threshold, args.rotation_threshold
+        args.capture_dir, args.scenes, args.devices_map, args.devices_query,
+        args.position_threshold, args.rotation_threshold, args.benchmarking_dir,
+        args.local_feature_method, args.matching_method, args.global_feature_method
     )
     
     # Print results
     for location, data in location_results.items():
-        print_success_matrix(data['matrix'], f"{location} Success Rate Matrix")
+        print_success_matrix(data['matrix'], f"{location.upper()} Success Rate Matrix", 
+                           args.devices_map, args.devices_query)
     
-    print_success_matrix(overall_results['matrix'], "OVERALL Success Rate Matrix")
+    print_success_matrix(overall_results['matrix'], "OVERALL Success Rate Matrix",
+                        args.devices_map, args.devices_query)
     
     # Save results with benchmark directory in path
-    output_dir = os.path.join(args.output_dir, BENCHMARK_DIR)
-    save_results(location_results, overall_results, output_dir)
+    output_dir = os.path.join(args.output_dir, args.benchmarking_dir)
+    save_results(location_results, overall_results, output_dir, 
+                args.devices_map, args.devices_query)
     
     print(f"\nResults saved to {output_dir}")
     print("\nEvaluation completed successfully!")

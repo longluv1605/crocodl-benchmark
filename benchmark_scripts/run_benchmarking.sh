@@ -26,9 +26,9 @@ fi
 
 # LOCATIONS=("SUCCULENT")
 LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_all_ml_sp_lg"
+OUTPUT_DIR="benchmarking_results"
 QUERIES_FILE="keyframes_original.txt"
-LOCAL_FEATURE_METHOD="superpoint"
+LOCAL_FEATURE_METHOD="rdd"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 # DEVICES_REF=("ios")
