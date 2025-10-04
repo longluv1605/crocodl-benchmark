@@ -39,9 +39,9 @@ if [ -d "$HLOC_SRC" ]; then
 fi
 
 LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_docker_ml_sp_lg"
-QUERIES_FILE="keyframes_pruned_subsampled.txt"
-LOCAL_FEATURE_METHOD="superpoint"
+OUTPUT_DIR="benchmarking_results"
+QUERIES_FILE="keyframes_original.txt"
+LOCAL_FEATURE_METHOD="rdd"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 DEVICES_REF=("ios" "hl" "spot")

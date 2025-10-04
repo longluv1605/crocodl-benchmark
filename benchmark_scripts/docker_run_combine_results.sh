@@ -15,10 +15,10 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-BENCHMARKING_DIR="/benchmarking_docker_ml_sp_lg"
+BENCHMARKING_DIR="/benchmarking_results"
 DESCRIPTION_FILE="${CAPTURE_DIR}/codabench/desc.txt"
 OUTPUT_DIR="${CAPTURE_DIR}/codabench"
-LOCAL_FEATURE_METHOD="superpoint"
+LOCAL_FEATURE_METHOD="rdd"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 SCENES=("hydro" "succu")

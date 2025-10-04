@@ -175,7 +175,7 @@ RUN python3 -m pip install --no-deps \
 RUN cd /lamar && python3 -m pip install -e . --no-deps --no-cache-dir
 
 ########## Update src #########
-RUN bash update_src/docker_update_src.sh
+RUN bash update_src/update_src_docker.sh
 
 ########## Download data ########
 RUN apt-get install git-lfs

@@ -16,7 +16,7 @@ if [ -z "$CAPTURE_DIR" ]; then
 fi
 
 # Configuration matching benchmark script structure
-BENCHMARKING_DIR="benchmarking_all_ml_sp_lg"
+BENCHMARKING_DIR="benchmarking_results"
 OUTPUT_DIR="${CAPTURE_DIR}/evaluation_results"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
