@@ -22,4 +22,4 @@ git clone --recursive -b crocodl/v1.4 \
   https://github.com/PetarLukovic/Hierarchical-Localization.git hloc --depth=1
 
 cd "${root_folder}/external/hloc"
-python3 -m pip install -e . --break-system-packages
+python3 -m pip install -e .

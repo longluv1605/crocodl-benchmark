@@ -5,6 +5,8 @@ if [ ! -d "$EXTERNAL_DIR/hloc/third_party/rdd" ]; then
     git clone --recursive https://github.com/xtcpete/rdd $EXTERNAL_DIR/hloc/third_party/rdd
 fi
 
+pip uninstall lightglue
+
 cp update_src/code/lightglue_rdd.py $EXTERNAL_DIR/hloc/third_party/rdd/third_party/LightGlue/lightglue/lightglue.py
 
 cd $EXTERNAL_DIR/hloc/third_party/rdd || exit
@@ -31,12 +33,12 @@ if [ ! -f "weights/RDD-v1.pth" ]; then
         -O weights/RDD-v1.pth
 fi
 
-# if [ ! -f "weights/RDD_lg-v2.pth" ]; then
-#     gdown --fuzzy "https://drive.google.com/file/d/153bHc-HXj7zT4d1hid-s9erjQ5sU5-aa/view?usp=drive_link" \
-#         -O weights/RDD_lg-v2.pth
-# fi
+if [ ! -f "weights/RDD_lg-v2.pth" ]; then
+    gdown --fuzzy "https://drive.google.com/file/d/153bHc-HXj7zT4d1hid-s9erjQ5sU5-aa/view?usp=drive_link" \
+        -O weights/RDD_lg-v2.pth
+fi
 
-# if [ ! -f "weights/RDD_lg-v1.pth" ]; then
-#     gdown --fuzzy "https://drive.google.com/file/d/1gr8pIFZZFyvsNZlTmU9OuUKu4Vj2IOdP/view?usp=drive_link" \
-#         -O weights/RDD_lg-v1.pth
-# fi
+if [ ! -f "weights/RDD_lg-v1.pth" ]; then
+    gdown --fuzzy "https://drive.google.com/file/d/1gr8pIFZZFyvsNZlTmU9OuUKu4Vj2IOdP/view?usp=drive_link" \
+        -O weights/RDD_lg-v1.pth
+fi

@@ -1,11 +1,10 @@
-from ..utils.base_model import BaseModel
-
 import sys
 from pathlib import Path
+
 lg_path = Path(__file__).parent / "../../third_party/rdd/third_party/LightGlue"
 sys.path.append(str(lg_path))
 
-
+from ..utils.base_model import BaseModel
 from lightglue import LightGlue as LightGlue_
 
 class LightGlue(BaseModel):

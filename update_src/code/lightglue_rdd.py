@@ -343,7 +343,7 @@ class LightGlue(nn.Module):
 
     features = {
         "rdd":{
-            "weights": str(rdd_path / "weights/RDD_lg.pth"),
+            "weights": str(rdd_path / "weights/RDD_lg-v2.pth"),
             "input_dim": 256,
         },
         "superpoint": {
@@ -410,17 +410,19 @@ class LightGlue(nn.Module):
         )
 
         state_dict = None
-        if features is not None:
+        if features is not None and features != "rdd":
             fname = f"{conf.weights}_{self.version.replace('.', '-')}.pth"
             state_dict = torch.hub.load_state_dict_from_url(
                 self.url.format(self.version, features), file_name=fname
             )
             self.load_state_dict(state_dict, strict=False)
-        elif conf.weights is not None:
+        elif conf.weights is not None and features != "rdd":
             path = Path(__file__).parent
             path = path / "weights/{}.pth".format(self.conf.weights)
             state_dict = torch.load(str(path), map_location="cpu")
-
+        elif features == "rdd":
+            state_dict = torch.load(self.conf.weights, map_location="cpu")
+            
         if state_dict:
             # rename old state dict entries
             for i in range(self.conf.n_layers):
