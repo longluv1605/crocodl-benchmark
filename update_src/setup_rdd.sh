@@ -1,15 +1,16 @@
 #!/bin/bash
 
 ### Setup env
-if [ ! -d "./external/hloc/third_party/rdd" ]; then
-    git clone https://github.com/xtcpete/rdd ./external/hloc/third_party/rdd
+if [ ! -d "$EXTERNAL_DIR/hloc/third_party/rdd" ]; then
+    git clone https://github.com/xtcpete/rdd $EXTERNAL_DIR/hloc/third_party/rdd
 fi
 
-cd ./external/hloc/third_party/rdd || exit
+cd $EXTERNAL_DIR/hloc/third_party/rdd || exit
 
 # pip install -r requirements.txt
 # cd ./RDD/models/ops
-# pip install -e .
+# pip install --no-build-isolation -e .
+# cd $EXTERNAL_DIR/hloc/third_party/rdd || exit
 
 ### Download weights
 if ! command -v gdown &> /dev/null; then

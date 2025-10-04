@@ -32,7 +32,7 @@ class RDD(BaseModel):
         
         self.model = self.model.to(data["image"].device)
         self.model.device = data["image"].device
-        if self.conf['combine']:
+        if self.conf.get('combine', False):
             features = self.model.extract_combine(data["image"], model='aliked')
             # only keep top_k keypoints
             if features[0]['scores'].numel() > self.conf["max_keypoints"]:
