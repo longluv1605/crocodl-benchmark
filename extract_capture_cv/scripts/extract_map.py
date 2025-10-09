@@ -1,5 +1,4 @@
 import os
-import math
 import shutil
 import pandas as pd
 import numpy as np
@@ -116,7 +115,7 @@ def extract_map(session_dir, map_endpoint_dir, ext_percent=0.3, symlinks=True):
     extract_proc(session_dir,  map_endpoint_dir)
     
     map_ids, map_image_paths = get_map_info(session_dir, ext_percent)
-    print(f"--> {device}_map len = {len(map_ids)}")
+    print(f"--> {device}_map len = {len(map_image_paths)}")
     
     # .TXT
     extract_txt(session_dir, map_endpoint_dir, map_ids, device)

@@ -1,9 +1,11 @@
 import os
-import math
 import shutil
 import pandas as pd
 import numpy as np
 
+
+MIN = 1
+MAX = 10
 
 def read_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -24,13 +26,45 @@ def extract_proc(map_endpoint_dir, query_endpoint_dir, file_name="proc/subsessio
     os.makedirs(os.path.dirname(des_path), exist_ok=True)
     shutil.copyfile(src_path, des_path)
 
-def get_query_info(map_endpoint_dir, file_name='images.txt', ext_percent=0.3):
+def sample(group, device, ext_percent):
+    K = 5 if device == "ios" else 3
+    n = len(group)
+    k = max(1, round(ext_percent * n))  # at least one
+    if k >= n:
+        return group
+    s = 0
+    if n > K * k:
+        while True:
+            s = np.random.randint(0, n)
+            if s + K * k < n:
+                break
+        t = s +  K * k
+    else:
+        t = n
+    indices = np.random.choice(np.arange(s, t), size=k, replace=False)
+    return group.iloc[indices]
+
+def get_query_ids(all_ids, device, ext_percent=0.3):
+    if not device == "ios":
+        all_subs = all_ids["subsession"].unique()
+        n_subs = max(1, round(len(all_subs) * ext_percent))
+        subs = np.random.choice(all_subs, n_subs, replace=False)
+        all_ids = all_ids[all_ids["subsession"].isin(subs)]
+    
+    all_ids = all_ids.groupby('subsession', group_keys=False).apply(lambda group: sample(group, device, ext_percent), include_groups=False)
+    query_ids = all_ids["# timestamp"].values
+    
+    return query_ids
+
+def get_query_info(map_endpoint_dir, device, ext_percent=0.3):
+    file_name='images.txt'
     file_path = os.path.join(map_endpoint_dir, file_name)
     df = pd.read_csv(file_path, sep=", ", engine="python")
-    all_ids = df['# timestamp'].unique()
-
-    query_len = math.ceil(len(all_ids) * ext_percent)
-    query_ids = np.random.choice(all_ids, query_len, replace=False)
+    
+    # Get query keys
+    df['subsession'] = df['sensor_id'].apply(lambda x: x.split("/")[0])
+    all_ids = df[["# timestamp", "subsession"]].drop_duplicates()
+    query_ids = get_query_ids(all_ids, device, ext_percent)
     
     # Get all image paths for the selected query IDs
     query_df = df[df['# timestamp'].isin(query_ids)]
@@ -141,8 +175,8 @@ def extract_query(map_endpoint_dir, query_endpoint_dir, ext_percent=0.3):
     # PROC
     extract_proc(map_endpoint_dir,  query_endpoint_dir)
     
-    query_ids, query_image_paths = get_query_info(map_endpoint_dir, 'images.txt', ext_percent)
-    print(f"--> {device}_query len = {len(query_ids)}")
+    query_ids, query_image_paths = get_query_info(map_endpoint_dir, device, ext_percent)
+    print(f"--> {device}_query len = {len(query_image_paths)}")
     
     # .TXT
     split_txt(map_endpoint_dir, query_endpoint_dir, query_ids, device)
