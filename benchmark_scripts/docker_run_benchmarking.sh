@@ -24,9 +24,26 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
+# SETUP DOCKER
+docker volume create hf_cache >/dev/null 2>&1 || true
+docker volume create torch_cache >/dev/null 2>&1 || true
+docker volume create models >/dev/null 2>&1 || true
+
+# Standard cache envs for Transformers/Torch
+## Cache
+export HF_HOME=/root/.cache/huggingface
+export TRANSFORMERS_CACHE=/root/.cache/huggingface
+export TORCH_HOME=/root/.cache/torch
+
+# Compose cache flags once to reuse in every docker run
+CACHE_FLAGS="-e HF_HOME=$HF_HOME -e TRANSFORMERS_CACHE=$TRANSFORMERS_CACHE -e TORCH_HOME=$TORCH_HOME \
+  -v hf_cache:$HF_HOME -v torch_cache:$TORCH_HOME -v models:/models"
+
+## RAM, GPU
 DOCKER_SHARE_RAM=8g
 DOCKER_GPU="--gpus all"  # empty string or "--gpus all"
 
+## MOUNT SOURCE
 LAMAR_SRC="./lamar"
 HLOC_SRC="./external/hloc"
 MOUNT_LAMAR_SRC=""
@@ -38,16 +55,15 @@ if [ -d "$HLOC_SRC" ]; then
   MOUNT_HLOC_SRC="-v $HLOC_SRC:/external/hloc"
 fi
 
+# BENCHMARKING CONFIGURATION
 LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_results"
+OUTPUT_DIR="long/benchmarking_results"
 QUERIES_FILE="keyframes_original.txt"
-LOCAL_FEATURE_METHOD="rdd"
+LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 DEVICES_REF=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
-# DEVICES_REF=("ios")
-# DEVICES_QUERY=("ios")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
@@ -87,12 +103,13 @@ for LOCATION in "${LOCATIONS[@]}"; do
 
       docker run --rm \
         $DOCKER_GPU \
+        $CACHE_FLAGS \
         --shm-size="$DOCKER_SHARE_RAM" \
         $MOUNT_LAMAR_SRC \
         $MOUNT_HLOC_SRC \
         -v "$OUTPUT_DIR_LOCATION":/data/output_dir \
         -v "$CAPTURE":/data/capture_dir \
-        croco:lamar \
+        croco:long \
         python -m lamar.run \
         --scene "$SCENE" \
         --ref_id "${ref}_map" \

@@ -15,18 +15,15 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-BENCHMARKING_DIR="/benchmarking_results"
+BENCHMARKING_DIR="/long/benchmarking_results"
 DESCRIPTION_FILE="${CAPTURE_DIR}/codabench/desc.txt"
 OUTPUT_DIR="${CAPTURE_DIR}/codabench"
-LOCAL_FEATURE_METHOD="rdd"
+LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
 SCENES=("hydro" "succu")
 DEVICES_MAP=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
-# SCENES=("succu")
-# DEVICES_MAP=("ios")
-# DEVICES_QUERY=("ios")
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
@@ -88,7 +85,7 @@ echo "  --output_dir \"$OUTPUT_DIR\""
 docker run --rm \
   -v "$CAPTURE_DIR":/data/capture_dir \
   -v "$DESCRIPTION_FILE":/data/capture_dir/codabench/desc.txt \
-  croco:lamar \
+  croco:long \
   "${CMD[@]}"
 
 echo "Done, combine_results_crocodl completed."
