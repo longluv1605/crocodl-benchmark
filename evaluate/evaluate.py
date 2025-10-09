@@ -11,6 +11,10 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from collections import defaultdict
+from scipy.spatial.transform import Rotation as R
+
+from .pose_transform import align_pred_to_gt
+from . import map_transform
 
 # Default configuration (will be overridden by command line arguments)
 DEFAULT_DEVICES = ['ios', 'hl', 'spot']
@@ -52,15 +56,12 @@ def load_poses_file(file_path):
                 continue
     
     return poses
-
+    
 def quaternion_to_rotation_matrix(q):
     """Convert quaternion [qw, qx, qy, qz] to rotation matrix."""
-    qw, qx, qy, qz = q
-    return np.array([
-        [1 - 2*(qy**2 + qz**2), 2*(qx*qy - qw*qz), 2*(qx*qz + qw*qy)],
-        [2*(qx*qy + qw*qz), 1 - 2*(qx**2 + qz**2), 2*(qy*qz - qw*qx)],
-        [2*(qx*qz - qw*qy), 2*(qy*qz + qw*qx), 1 - 2*(qx**2 + qy**2)]
-    ])
+    # q = [qw, qx, qy, qz]
+    q_xyzw = [q[1], q[2], q[3], q[0]]
+    return R.from_quat(q_xyzw).as_matrix()
 
 def compute_pose_error(gt_pose, est_pose):
     """Compute position and rotation error between ground truth and estimated poses."""
@@ -96,6 +97,10 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
     gt_file = f"{capture_dir}/{location_path}/sessions/{query_device}_query/trajectories.txt"
     gt_poses = load_poses_file(gt_file)
     
+    # Load map trajectories
+    map_file = f"{capture_dir}/{location_path}/sessions/{map_device}_map/trajectories.txt"
+    map_poses = load_poses_file(map_file)
+    
     # Build path to estimated poses based on method configuration
     if query_device == "ios":
         device_type = "single_image"
@@ -106,6 +111,14 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
     poses_file = f"{pose_dir}/poses.txt"
     estimated_poses = load_poses_file(poses_file)
     
+    # if not query_device == map_device:
+    #     estimated_poses, (_, _) = align_pred_to_gt(estimated_poses, gt_poses)
+    #     print(f"Aligned {query_device}-{map_device}")
+    # anchor_pose = map_transform.select_anchor(map_poses)
+    # rel_gt_poses = map_transform.convert_gt_to_anchor_frame(gt_poses, anchor_pose)
+    # rel_pred_poses = map_transform.convert_pred_to_anchor_frame(estimated_poses)
+
+    
     # Compare poses
     total_gt = len(gt_poses)
     successful_poses = 0
@@ -114,12 +127,18 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
     # Simply find common timestamps (same timestamps, just different order)
     gt_timestamps = set(gt_poses.keys())
     est_timestamps = set(estimated_poses.keys())
+    
+    # gt_timestamps = set(rel_gt_poses.keys())
+    # est_timestamps = set(rel_pred_poses.keys())
+    
     matched_timestamps = gt_timestamps & est_timestamps
     total_matched = len(matched_timestamps)
     
     for timestamp in matched_timestamps:
         gt_pose = gt_poses[timestamp]
         est_pose = estimated_poses[timestamp]
+        # gt_pose = rel_gt_poses[timestamp]
+        # est_pose = rel_pred_poses[timestamp]
         
         pos_error, rot_error = compute_pose_error(gt_pose, est_pose)
         

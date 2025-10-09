@@ -16,7 +16,7 @@ if [ -z "$CAPTURE_DIR" ]; then
 fi
 
 # Configuration matching benchmark script structure
-BENCHMARKING_DIR="benchmarking_results"
+BENCHMARKING_DIR="long/benchmarking_results"
 OUTPUT_DIR="${CAPTURE_DIR}/evaluation_results"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
@@ -24,8 +24,8 @@ GLOBAL_FEATURE_METHOD="megaloc"
 SCENES=("hydro" "succu")
 DEVICES_MAP=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
-POSITION_THRESHOLD=2.0
-ROTATION_THRESHOLD=10.0
+POSITION_THRESHOLD=2
+ROTATION_THRESHOLD=20
 PYTHON_SCRIPT="${SCRIPT_DIR}/evaluate.py"
 
 # Function to display usage
@@ -125,7 +125,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Run evaluation
 echo "Running evaluation..."
-python3 "$PYTHON_SCRIPT" \
+python3 -m evaluate.evaluate \
     --capture_dir "$CAPTURE_DIR" \
     --output_dir "$OUTPUT_DIR" \
     --benchmarking_dir "$BENCHMARKING_DIR" \
