@@ -85,7 +85,12 @@ Capture directory has to end with **capture/** folder. Some of the scripts requi
 We provide a simple script to download all challenge data at once using git. The script will create the necessary folder structure such that data is ready out of the box. For the code to run smoothly, you should use given folder structure. Firstly, to download challenge data you can run:
 
 ```bash
-./benchmark_scripts/run_download_data.sh --challenge
+pip install huggingface_hub
+pip install hf_transfer
+```
+
+```bash
+./benchmark_scripts/run_download_data.sh --arche
 ```
 
 you can alter the path of the dataset as you wish, however, final folder has to be named capture/. Challenge data comes in the same folder as regular, full release, data but with removed ground truth and consisting only of maps and queries for all devices. For the challenge we provide two locations: **HYDRO** and **SUCCULENT**. Once the data is downloaded, you can run benchmarking on it!
