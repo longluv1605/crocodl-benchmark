@@ -87,73 +87,43 @@ if $FULL_RELEASE; then
 fi
 
 #######################################################################################
-if $ARCHE; then
+
+
+#############################
+if [ "$ARCHE" ]; then
   echo "[INFO] Running in ARCHE mode..."
 
-  if ! command -v git >/dev/null 2>&1; then
-    echo "[ERROR] git not found. Please install git."
-    exit 1
+  # 1. Check that huggingface_hub is installed
+  if ! python3 -c "import huggingface_hub" >/dev/null 2>&1; then
+    echo "[INFO] Installing huggingface_hub..."
+    pip install -q huggingface_hub hf_transfer || {
+      echo "[ERROR] Failed to install huggingface_hub"
+      exit 1
+    }
   fi
-  if ! command -v git-lfs >/dev/null 2>&1 && ! command -v git lfs >/dev/null 2>&1; then
-    echo "[ERROR] git-lfs not found. Please install git-lfs (apt-get install git-lfs && git lfs install)."
-    exit 1
-  fi
-  git lfs install
+  export HF_HUB_ENABLE_HF_TRANSFER=1
 
-  export GIT_LFS_SKIP_SMUDGE=1
-
-  SPARSE_PATHS=()
-  LFS_INCLUDE=()
-  for pat in "${ARCHE_PATTERNS[@]}"; do
-    base="${pat%/**}"         
-    SPARSE_PATHS+=("$base")
-    LFS_INCLUDE+=("$pat")       
-  done
-  IFS=,; LFS_INCLUDE_CSV="${LFS_INCLUDE[*]}"; IFS=$' \t\n'
-
+  # 2. Loop through all scenes
   for scene in "${ARCHE_SCENES[@]}"; do
     echo "[INFO] Downloading scene: ${scene}"
-    repo_url="https://huggingface.co/datasets/CroCoDL/${scene}"
     target_dir="${CAPTURE_DIR}/${scene}"
 
-    rm -rf "${target_dir}"
-    mkdir -p "${target_dir}"
+    # python3 -m benchmark_scripts.hf_download \
+    #   --repo_id "CroCoDL/${scene}" \
+    #   --allow_patterns "sessions" \
+    #   --local_dir "${target_dir}" \
 
-    echo "[INFO] Cloning metadata (no blobs) -> ${target_dir}"
-    if [[ -n "${HF_TOKEN:-}" ]]; then
-      git -c "http.https://huggingface.co/.extraheader=Authorization: Bearer ${HF_TOKEN}" \
-          clone --filter=blob:none "${repo_url}" "${target_dir}"
-    else
-      git clone --filter=blob:none "${repo_url}" "${target_dir}"
+    hf download \
+      "CroCoDL/${scene}" \
+      --repo-type dataset \
+      --include "${ARCHE_PATTERNS[@]}" \
+      --local-dir "${target_dir}" \
+      --force-download
+
+    if [ $? -ne 0 ]; then
+      echo "[WARNING] Download failed for scene: ${scene}"
     fi
-
-    cd "$target_dir" || { echo "[ERROR] cd failed: $target_dir"; exit 1; }
-    cat <<EOF > .gitattributes
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.png filter=lfs diff=lfs merge=lfs -text
-*.mp4 filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
-*.ply filter=lfs diff=lfs merge=lfs -text
-EOF
-
-    echo "[INFO] Enabling sparse-checkout for selected folders..."
-    git -C "$target_dir" sparse-checkout init --no-cone
-    git -C "$target_dir" sparse-checkout set "${SPARSE_PATHS[@]}"
-
-    echo "[INFO] Fetching required LFS objects: ${LFS_INCLUDE_CSV}"
-    git -C "$target_dir" lfs fetch --include="${LFS_INCLUDE_CSV}" --exclude=""
-    git -C "$target_dir" lfs pull --include="${LFS_INCLUDE_CSV}" --exclude=""
-
-    echo "[INFO] Materializing files (git lfs checkout)..."
-    git -C "$target_dir" lfs checkout
-
-    rm -rf .git .gitattributes
-    keep_dirs=$(printf "%s\n" "${ARCHE_PATTERNS[@]}" | sed 's|/.*||' | sort -u)
-    find . -mindepth 1 -maxdepth 1 -type d ! \( $(printf "! -name %s -a " $keep_dirs | sed 's/-a $//') \) -exec rm -rf -- {} +
-
-    cd - >/dev/null
-    echo "[SUCCESS] Scene ${scene} ready at: ${target_dir}"
   done
 
-  echo "[INFO] Done downloading ARCHE data."
+  echo "[INFO] Done downloading challenge data."
 fi
