@@ -21,7 +21,7 @@ OUTPUT_DIR="${CAPTURE_DIR}/codabench"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-SCENES=("hydro" "succu")
+SCENES=("ARCHE_D2")
 DEVICES_MAP=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
 

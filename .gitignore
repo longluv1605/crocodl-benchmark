@@ -125,4 +125,4 @@ subset**/
 capture_tree.txt
 output.txt
 evaluation_results/
-test.py
+test*.*

@@ -24,16 +24,13 @@ if [ -z "$CAPTURE_DIR" ]; then
   exit 1
 fi
 
-# LOCATIONS=("SUCCULENT")
-LOCATIONS=("HYDRO" "SUCCULENT")
-OUTPUT_DIR="benchmarking_results"
-QUERIES_FILE="keyframes_original.txt"
-LOCAL_FEATURE_METHOD="rdd"
+LOCATIONS=("ARCHE_D2")
+OUTPUT_DIR="long/benchmarking_results"
+QUERIES_FILE="keyframes_pruned_subsampled.txt"
+LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-# DEVICES_REF=("ios")
 DEVICES_REF=("ios" "hl" "spot")
-# DEVICES_QUERY=("ios")
 DEVICES_QUERY=("ios" "hl" "spot")
 
 echo "You are running with parameters: "

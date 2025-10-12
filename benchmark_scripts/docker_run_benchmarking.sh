@@ -56,9 +56,9 @@ if [ -d "$HLOC_SRC" ]; then
 fi
 
 # BENCHMARKING CONFIGURATION
-LOCATIONS=("HYDRO" "SUCCULENT")
+LOCATIONS=("ARCHE_D2")
 OUTPUT_DIR="long/benchmarking_results"
-QUERIES_FILE="keyframes_original.txt"
+QUERIES_FILE="keyframes_pruned_subsampled.txt"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
