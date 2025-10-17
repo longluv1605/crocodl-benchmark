@@ -26,8 +26,8 @@ def read_poses(file_path):
             poses.append({
                 'timestamp': line[0],
                 'device_id': line[1],
-                'Q': q,
-                'T': t,
+                'q': q,
+                't': t,
                 'covar': covar
             })
     return poses
@@ -38,8 +38,8 @@ def read_rigs(file_path=None):
         t = {'x': 0.0, 'y': 0.0, 'z': 0.0}
         return {
             'rig_sensors': {
-                'Q': q,
-                'T': t,
+                'q': q,
+                't': t,
             }
         }
     rigs = defaultdict(dict)
@@ -63,8 +63,8 @@ def read_rigs(file_path=None):
             }
             
             rigs[rig_id][sensor_id] = {
-                'Q': q,
-                'T': t,
+                'q': q,
+                't': t,
             }
     return rigs
 
@@ -122,14 +122,14 @@ def load_poses(poses_path, sensors_path, rigs_path=None, len=None, color=[255, 2
 
 class CamPoseVisualizer():
     def __init__(self, scale = 0.01):
-        self.scale = 0.01
+        self.scale = scale
         self.vis = o3d.visualization.Visualizer()
     
-    def get_pose_matrix(self, Q, T):
-        q_xyzw = np.array([Q['x'], Q['y'], Q['z'], Q['w']])
+    def get_pose_matrix(self, q, t):
+        q_xyzw = np.array([q['x'], q['y'], q['z'], q['w']])
         pose = np.eye(4)
         pose[:3, :3] = R.from_quat(q_xyzw).as_matrix()
-        pose[:3, 3] = np.array([T['x'], T['y'], T['z']])
+        pose[:3, 3] = np.array([t['x'], t['y'], t['z']])
         return pose
     
     def get_T_from_pose_matrix(self, pose_matrix):
@@ -186,7 +186,7 @@ class CamPoseVisualizer():
         ]
         
         points = [rig_origin] + cam_origins
-        colors = [color] + [[0, 1, 0]] * len(cam_origins)
+        colors = [color] + [color] * len(cam_origins)
 
         pc = o3d.geometry.PointCloud()
         pc.points = o3d.utility.Vector3dVector(points)
@@ -196,7 +196,7 @@ class CamPoseVisualizer():
         line_set = o3d.geometry.LineSet()
         line_set.points = o3d.utility.Vector3dVector(points)
         line_set.lines = o3d.utility.Vector2iVector(lines)
-        line_set.colors = o3d.utility.Vector3dVector([[1, 1, 0]] * len(lines))
+        line_set.colors = o3d.utility.Vector3dVector([color] * len(lines))
         self.vis.add_geometry(line_set)
         self.vis.add_geometry(pc)
     
@@ -207,13 +207,13 @@ class CamPoseVisualizer():
                 'color': [r, g, b]
                 'timestamp': "...",
                 'device_id': "..."
-                'Q': {'x', 'y', 'z', 'w'},
-                'T': {'x', 'y', 'z'},
+                'q': {'x', 'y', 'z', 'w'},
+                't': {'x', 'y', 'z'},
                 'covar': [...]
                 'rig_sensors': {
                     "<sensor_id>": {
-                        'Q': {'x', 'y', 'z', 'w'},  => in 'rigs.txt', depend on '<sensor_id>' & 'device_id'
-                        'T': {'x', 'y', 'z'},       => in 'rigs.txt', depend on '<sensor_id>' & 'device_id'
+                        'q': {'x', 'y', 'z', 'w'},  => in 'rigs.txt', depend on '<sensor_id>' & 'device_id'
+                        't': {'x', 'y', 'z'},       => in 'rigs.txt', depend on '<sensor_id>' & 'device_id'
                         'K': [],        => in 'sensors.txt'
                         'width': ...,   => in 'sensors.txt'
                         'height': ...,  => in 'sensors.txt'
@@ -227,11 +227,11 @@ class CamPoseVisualizer():
         
         self.vis.create_window()
         for pose in poses:
-            rig_pose = self.get_pose_matrix(pose['Q'], pose['T'])
+            rig_pose = self.get_pose_matrix(pose['q'], pose['t'])
             
             cam_poses = []
             for sensor_id, sensor_info in pose["rig_sensors"].items():
-                cam_pose_rig = self.get_pose_matrix(sensor_info['Q'], sensor_info['T'])
+                cam_pose_rig = self.get_pose_matrix(sensor_info['q'], sensor_info['t'])
                 cam_pose_world = rig_pose @ cam_pose_rig
                 
                 cam_poses.append(cam_pose_world)
@@ -250,16 +250,23 @@ class CamPoseVisualizer():
         opt = self.vis.get_render_option()
         opt.line_width = 10
         opt.background_color = np.array([0, 0, 0])
+        axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
+        self.vis.add_geometry(axis)
         self.vis.run()
+        self.vis.clear_geometries()
         self.vis.destroy_window()
-        
     
 def load_gt_and_est_poses(est_poses_path, gt_poses_path, sensors_path, rigs_path=None, est_color=[255, 0, 0], gt_color=[0, 255, 0]):
     est_poses = load_poses(est_poses_path, sensors_path, rigs_path=rigs_path, color=est_color)
-    timestamps = set([item['timestamp'] for item in est_poses])
+    est_timestamps = set([item['timestamp'] for item in est_poses])
     
     gt_poses = load_poses(gt_poses_path, sensors_path, rigs_path=rigs_path, color=gt_color)   
-    gt_poses = [item for item in gt_poses if item['timestamp'] in timestamps]
+    gt_timestamps = set([item['timestamp'] for item in gt_poses])
+    
+    matched_timestamps = est_timestamps & gt_timestamps
+    
+    est_poses = [pose for pose in est_poses if pose['timestamp'] in matched_timestamps]
+    gt_poses = [pose for pose in gt_poses if pose['timestamp'] in matched_timestamps]
     
     return est_poses, gt_poses
         

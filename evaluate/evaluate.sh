@@ -21,71 +21,12 @@ OUTPUT_DIR="${CAPTURE_DIR}/evaluation_results"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"
-SCENES=("hydro" "succu")
+SCENES=("arche_d2")
 DEVICES_MAP=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
-POSITION_THRESHOLD=2
-ROTATION_THRESHOLD=20
+POSITION_THRESHOLD=0.5
+ROTATION_THRESHOLD=5
 PYTHON_SCRIPT="${SCRIPT_DIR}/evaluate.py"
-
-# Function to display usage
-usage() {
-    cat << EOF
-Usage: $0 [OPTIONS]
-
-Cross-device pose estimation evaluation with success rate matrix analysis.
-
-OPTIONS:
-    -o, --output_dir DIR        Output directory for results (default: ${OUTPUT_DIR})
-    -p, --position_threshold T  Position error threshold in meters (default: ${POSITION_THRESHOLD})
-    -r, --rotation_threshold T  Rotation error threshold in degrees (default: ${ROTATION_THRESHOLD})
-    -h, --help                  Show this help message
-
-EXAMPLES:
-    $0                                          # Use default settings
-    $0 --output_dir ./results                   # Specify output directory
-    $0 --position_threshold 2.0 --rotation_threshold 10.0  # Custom thresholds
-
-This script evaluates cross-device pose estimation performance by computing success rate matrices.
-The success rate is calculated as: (successful poses / total ground truth poses) * 100%
-
-A pose is considered successful if both position error < position_threshold AND rotation error < rotation_threshold.
-
-Output includes:
-- Location-wise success rate matrices (HYDRO, SUCCULENT)
-- Overall success rate matrix (aggregated across all locations)
-- JSON files with detailed results
-- CSV files with formatted matrices
-
-EOF
-}
-
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        -o|--output_dir)
-            OUTPUT_DIR="$2"
-            shift 2
-            ;;
-        -p|--position_threshold)
-            POSITION_THRESHOLD="$2"
-            shift 2
-            ;;
-        -r|--rotation_threshold)
-            ROTATION_THRESHOLD="$2"
-            shift 2
-            ;;
-        -h|--help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "Unknown option $1"
-            usage
-            exit 1
-            ;;
-    esac
-done
 
 # Validate inputs
 if [[ ! -d "$CAPTURE_DIR" ]]; then

@@ -94,12 +94,8 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
         location_path = location.upper()
     
     # Load ground truth trajectories
-    gt_file = f"{capture_dir}/{location_path}/sessions/{query_device}_query/trajectories.txt"
+    gt_file = f"{capture_dir}/{location_path}/sessions/{query_device}_query/proc/alignment_trajectories.txt"
     gt_poses = load_poses_file(gt_file)
-    
-    # Load map trajectories
-    map_file = f"{capture_dir}/{location_path}/sessions/{map_device}_map/trajectories.txt"
-    map_poses = load_poses_file(map_file)
     
     # Build path to estimated poses based on method configuration
     if query_device == "ios":
@@ -110,15 +106,7 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
     pose_dir = f"{capture_dir}/{location_path}/{benchmarking_dir}/pose_estimation/{query_device}_query/{map_device}_map/{local_feature_method}/{matching_method}/{global_feature_method}/triangulation/{device_type}"
     poses_file = f"{pose_dir}/poses.txt"
     estimated_poses = load_poses_file(poses_file)
-    
-    # if not query_device == map_device:
-    #     estimated_poses, (_, _) = align_pred_to_gt(estimated_poses, gt_poses)
-    #     print(f"Aligned {query_device}-{map_device}")
-    # anchor_pose = map_transform.select_anchor(map_poses)
-    # rel_gt_poses = map_transform.convert_gt_to_anchor_frame(gt_poses, anchor_pose)
-    # rel_pred_poses = map_transform.convert_pred_to_anchor_frame(estimated_poses)
 
-    
     # Compare poses
     total_gt = len(gt_poses)
     successful_poses = 0
@@ -128,17 +116,12 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
     gt_timestamps = set(gt_poses.keys())
     est_timestamps = set(estimated_poses.keys())
     
-    # gt_timestamps = set(rel_gt_poses.keys())
-    # est_timestamps = set(rel_pred_poses.keys())
-    
     matched_timestamps = gt_timestamps & est_timestamps
     total_matched = len(matched_timestamps)
     
     for timestamp in matched_timestamps:
         gt_pose = gt_poses[timestamp]
         est_pose = estimated_poses[timestamp]
-        # gt_pose = rel_gt_poses[timestamp]
-        # est_pose = rel_pred_poses[timestamp]
         
         pos_error, rot_error = compute_pose_error(gt_pose, est_pose)
         
@@ -147,7 +130,7 @@ def evaluate_device_pair(capture_dir, location, query_device, map_device, pos_th
             successful_poses += 1
     
     # Calculate success rate
-    success_rate = (successful_poses / total_gt * 100) if total_gt > 0 else 0.0
+    success_rate = (successful_poses / total_matched * 100) if total_gt > 0 else 0.0
     
     return {
         'query_device': query_device,
@@ -202,7 +185,7 @@ def compute_success_rate_matrices(capture_dir, scenes, devices_map, devices_quer
                 detail_key = f"{query_device}_vs_{map_device}"
                 if detail_key in location_results[scene]['details']:
                     detail = location_results[scene]['details'][detail_key]
-                    total_gt += detail['total_gt_poses']
+                    total_gt += detail['total_matched']
                     total_successful += detail['successful_poses']
             
             overall_success_rate = (total_successful / total_gt * 100) if total_gt > 0 else 0.0
