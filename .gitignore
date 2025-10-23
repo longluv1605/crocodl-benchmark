@@ -126,3 +126,4 @@ capture_tree.txt
 output.txt
 evaluation_results/
 test*.*
+notebooks/estimate_pose/
