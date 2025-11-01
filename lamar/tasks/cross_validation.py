@@ -26,13 +26,17 @@ class CrossValidationPaths:
     def __init__(self, root, config, query_id, ref_id):
         self.root = root
         self.workdir = (
-            root / 'cross_validation' / query_id / ref_id
+            root / 'cross_validation_1' / query_id / ref_id
             / config['features']['name'] / config['matches']['name']
             / config['pairs']['name'] / config['name']
         )
         self.poses = self.workdir / 'poses.txt'
         self.config = self.workdir / 'configuration.json'
         self.evaluation = self.workdir / 'evaluation.json'
+        self.detailed_errors = self.workdir / "detailed_errors.txt"
+        self.fail_moderate = self.workdir / "fail_moderate.txt"
+        self.fail_severe = self.workdir / "fail_severe.txt"
+        
 
 class CrossValidation:
     methods = {}
@@ -67,11 +71,13 @@ class CrossValidation:
         matching: FeatureMatching,
         query_keys: list = None,
         Rt_threshold: Tuple[float, float] = (20.0, 20.0),
+        filter_R_threshold: Tuple[float, float] = (5.0, 15.0),
         top: int = 3,
         parallel: bool = True,
     ):
         self.parallel = parallel
         self.Rt_threshold = Rt_threshold
+        self.filter_R_threshold = filter_R_threshold
         self.top = top
         
         assert query_id == extraction.session_id
@@ -109,7 +115,7 @@ class CrossValidation:
         else:
             self.poses = Trajectories().load(self.paths.poses)
             
-        self.err_t, self.err_R, self.recall = self.compute_errors(capture)
+        self.err_t, self.err_R, self.recall, self.detailed_errors, self.moderate_fails, self.severe_fails = self.compute_errors(capture)
         self.evaluation = {
             query_id: {
                 ref_id: {
@@ -122,8 +128,21 @@ class CrossValidation:
         }
         write_config(self.evaluation, self.paths.evaluation)
         write_config(self.config, self.paths.config)
+
+        with open(self.paths.detailed_errors, "w") as f:
+            for item in self.detailed_errors:
+                f.write(f"{item['query']} {item['map']} err_R={item['err_R']:.3f} err_t={item['err_t']:.3f}\n")
+
+        with open(self.paths.fail_moderate, "w") as f:
+            for item in self.moderate_fails:
+                f.write(f"{item['query']} {item['map']} err_R={item['err_R']:.2f} err_t={item['err_t']:.2f}\n")
+        
+        with open(self.paths.fail_severe, "w") as f:
+            for item in self.severe_fails:
+                f.write(f"{item['query']} {item['map']} err_R={item['err_R']:.2f} err_t={item['err_t']:.2f}\n")
         
         print(f"R_threshold = {self.Rt_threshold[0]} || t_threshold = {self.Rt_threshold[1]}")        
+        print(f"moderate_R_threshold = {self.filter_R_threshold[0]} || severe_R_threshold = {self.filter_R_threshold[1]}") 
         print(f"Translation err_t {query_id}-{ref_id} = {self.err_t}")
         print(f"Rotation err_R {query_id}-{ref_id} = {self.err_R}")
         print(f"Rotation acc_R {query_id}-{ref_id} = {1 - self.err_R / 90.0}")
@@ -190,6 +209,9 @@ class CrossValidation:
         # map_rigs = list_trajectory_keys_for_session(capture, self.ref_id)
                 
         all_err_t, all_err_R = defaultdict(list), defaultdict(list)
+        detailed_results = []
+        moderate_fails = []
+        severe_fails = [] 
         def _worker_fn(idx: int):
             query_img, map_img = self.pairs[idx]
             q_ts, query_sensor_id = query_keys[query_names.index(query_img)]
@@ -209,6 +231,12 @@ class CrossValidation:
             err_t, err_R = compute_pose_error(T_0to1, est_pose)
             all_err_t[query_img].append(err_t)
             all_err_R[query_img].append(err_R)
+            detailed_results.append({
+                "query": query_img,
+                "map": map_img,
+                "err_t": float(err_t),
+                "err_R": float(err_R)
+            })
         map_ = thread_map if self.parallel else lambda f, x: list(map(f, tqdm(x)))
         map_(_worker_fn, range(len(self.pairs)))
         
@@ -216,8 +244,17 @@ class CrossValidation:
         all_err_R = self.convert_to_list(all_err_R, self.top)
                 
         th_r, th_t = self.Rt_threshold
+        moderate_th_r, severe_th_r = self.filter_R_threshold
         recall = np.mean((all_err_R < th_r) & (all_err_t < th_t))
-        return all_err_t.mean(), all_err_R.mean(), recall
+
+        for item in detailed_results:
+            err_R = item["err_R"]
+            if moderate_th_r < err_R <= severe_th_r:
+                moderate_fails.append(item)
+            elif err_R > severe_th_r:
+                severe_fails.append(item)
+
+        return all_err_t.mean(), all_err_R.mean(), recall, detailed_results, moderate_fails, severe_fails
     
     
 class SingleCrossValidation(CrossValidation):
