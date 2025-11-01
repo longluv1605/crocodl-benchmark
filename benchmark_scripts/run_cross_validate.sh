@@ -34,7 +34,8 @@ DEVICES_REF=("ios" "hl" "spot")
 DEVICES_QUERY=("ios" "hl" "spot")
 R_THRESHOLD=20.0
 T_THRESHOLD=20.0
-TOP=3
+TOP=5
+R_MARGIN=5 # margin that split low and high rotation error.
 
 echo "You are running with parameters: "
 echo "  Capture: ${CAPTURE_DIR}"
@@ -85,6 +86,7 @@ for LOCATION in "${LOCATIONS[@]}"; do
         --R_threshold "$R_THRESHOLD" \
         --t_threshold "$T_THRESHOLD" \
         --top "$TOP" \
+        --r_margin "$R_MARGIN" \
         $is_rig_flag
 
       echo "Cross validating completed for ref_id=${ref}_map and query_id=${query}_query"

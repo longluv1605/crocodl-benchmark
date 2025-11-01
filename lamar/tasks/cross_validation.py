@@ -40,6 +40,7 @@ class CrossValidation:
     method = None
     Rt_threshold = (20.0, 10.0)
     top = 3
+    r_margin = 10
     
     def __init_subclass__(cls):
         '''Register the child classes into the parent'''
@@ -68,11 +69,13 @@ class CrossValidation:
         query_keys: list = None,
         Rt_threshold: Tuple[float, float] = (20.0, 20.0),
         top: int = 3,
+        r_margin: float = 10.0,
         parallel: bool = True,
     ):
         self.parallel = parallel
         self.Rt_threshold = Rt_threshold
         self.top = top
+        self.r_margin = r_margin
         
         assert query_id == extraction.session_id
         assert query_id == matching.query_id
@@ -168,18 +171,6 @@ class CrossValidation:
         map_(_worker_fn, range(len(self.pairs)))
         return poses
 
-    def filter_top(self, results: dict, n: int = 5):
-        for k, v in results.items():
-            results[k] = sorted(v)[:n]
-        return results
-
-    def convert_to_list(self, results: dict, top: int = 5):
-        results = self.filter_top(results, top)
-        result_list = []
-        for value_list in results.values():
-            result_list.extend(value_list)
-        return np.array(result_list)
-
     def compute_errors(self, capture):
         """
         Need: pairs, Q/R images, est poses, Q/R poses, Q/R rigs
@@ -190,6 +181,8 @@ class CrossValidation:
         # map_rigs = list_trajectory_keys_for_session(capture, self.ref_id)
                 
         all_err_t, all_err_R = defaultdict(list), defaultdict(list)
+        good_pairs, bad_pairs = [], []
+        
         def _worker_fn(idx: int):
             query_img, map_img = self.pairs[idx]
             q_ts, query_sensor_id = query_keys[query_names.index(query_img)]
@@ -207,10 +200,22 @@ class CrossValidation:
             T_0to1 = np.linalg.inv(map_pose) @ query_pose
             
             err_t, err_R = compute_pose_error(T_0to1, est_pose)
+            
+            # Collect
             all_err_t[query_img].append(err_t)
             all_err_R[query_img].append(err_R)
+            
+            # Classify
+            if err_R < self.r_margin:
+                good_pairs.append((query_img, map_img, str(err_R)))
+            else:
+                bad_pairs.append((query_img, map_img, str(err_R)))
+            
         map_ = thread_map if self.parallel else lambda f, x: list(map(f, tqdm(x)))
         map_(_worker_fn, range(len(self.pairs)))
+        
+        self.save_pairs(good_pairs, 'good')
+        self.save_pairs(bad_pairs, 'bad')
         
         all_err_t = self.convert_to_list(all_err_t, self.top)
         all_err_R = self.convert_to_list(all_err_R, self.top)
@@ -218,7 +223,29 @@ class CrossValidation:
         th_r, th_t = self.Rt_threshold
         recall = np.mean((all_err_R < th_r) & (all_err_t < th_t))
         return all_err_t.mean(), all_err_R.mean(), recall
+
+    def filter_top(self, results: dict, n: int = 5):
+        for k, v in results.items():
+            results[k] = sorted(v)[:n]
+        return results
+
+    def convert_to_list(self, results: dict, top: int = 5):
+        results = self.filter_top(results, top)
+        result_list = []
+        for value_list in results.values():
+            result_list.extend(value_list)
+        return np.array(result_list)
     
+    def save_pairs(self, pairs: list, type: str):
+        save_path = f"{self.paths.workdir}/{type}_pairs.txt"
+        with open(save_path, 'w', encoding='utf-8') as f:
+            lines = "# query_img, map_img, R_err\n"
+            for pair in pairs:
+                line = ", ".join(pair)
+                lines += line + '\n'
+            f.write(lines)
+        print(f"Saved {type} pairs to {save_path}")
+        f.close()
     
 class SingleCrossValidation(CrossValidation):
     method = {

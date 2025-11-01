@@ -34,7 +34,8 @@ def run(outputs: Path,
         query_filename: str = 'keyframes_original.txt',
         R_threshold: float = 20.0,
         t_threshold: float = 20.0,
-        top: int = 3):
+        top: int = 3,
+        r_margin: float = 10):
 
     if matcher_query is None:
         matcher_query = matcher
@@ -104,7 +105,7 @@ def run(outputs: Path,
         cross_valid = CrossValidation(
             configs['cross_valid'], outputs, capture, query_id, ref_id, pairs_loc,
             extraction_query, extraction_map, matching_query, query_list,
-            (R_threshold, t_threshold), top
+            (R_threshold, t_threshold), top, r_margin
         )
         results = str(cross_valid.paths.poses)
 
@@ -136,7 +137,8 @@ if __name__ == '__main__':
         default='keyframes_original.txt')
     parser.add_argument('--R_threshold', type=float, required=True)
     parser.add_argument('--t_threshold', type=float, required=True)
-    parser.add_argument('--top', type=int, default=3, required=True)
+    parser.add_argument('--top', type=int, default=10, required=True)
+    parser.add_argument('--r_margin', type=float, default=10.0, required=True)
     
     args = parser.parse_args().__dict__
     scene = args.pop("scene")
