@@ -25,8 +25,8 @@ apt-get install -y --no-install-recommends --no-install-suggests \
     libqt5opengl5-dev \
     libcgal-dev
 
-# Installing COLMAP version 3.8
-git clone --recursive -b 3.8 https://github.com/colmap/colmap colmap_v3.8 --depth=1
-cd colmap_v3.8
+# Installing COLMAP version 3.10 (instead of 3.8)
+git clone --recursive -b 3.10 https://github.com/colmap/colmap colmap_v3.10 --depth=1
+cd colmap_v3.10
 cmake -S . -B build -DCMAKE_CUDA_ARCHITECTURES=all
 cmake --build build --target install -- -j$(nproc)
