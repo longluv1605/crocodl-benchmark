@@ -9,7 +9,7 @@ from collections import defaultdict
 from .pair_selection import PairSelection
 from .feature_extraction import FeatureExtraction
 from .feature_matching import FeatureMatching
-from ..utils.misc import same_configs, write_config
+from ..utils.misc import same_configs, write_config, same_keyframes, write_keyframes
 from ..utils.cross_validate import estimate_pose, compute_pose_error
 from ..utils.capture import list_images_for_session, list_trajectory_keys_for_session
 from scantools.capture import Capture, Trajectories, Pose
@@ -33,6 +33,7 @@ class CrossValidationPaths:
         self.poses = self.workdir / 'poses.txt'
         self.config = self.workdir / 'configuration.json'
         self.evaluation = self.workdir / 'evaluation.json'
+        self.keyframes = self.workdir / 'keyframes.json'
 
 class CrossValidation:
     methods = {}
@@ -66,7 +67,7 @@ class CrossValidation:
         extraction: FeatureExtraction,
         extraction_ref: FeatureExtraction,
         matching: FeatureMatching,
-        query_keys: list = None,
+        query_keys = None,
         Rt_threshold: Tuple[float, float] = (20.0, 20.0),
         top: int = 3,
         r_margin: float = 10.0,
@@ -103,7 +104,8 @@ class CrossValidation:
         self.session_r = capture.sessions[ref_id] # (sensors, rigs, trajectories)
 
         self.paths.workdir.mkdir(parents=True, exist_ok=True)
-        overwrite = not same_configs(self.config, self.paths.config)
+        overwrite = not same_configs(self.config, self.paths.config) \
+            or not same_keyframes(self.query_keys, self.paths.keyframes)
         if overwrite:
             logger.info('Cross validating session %s with features %s.',
                         query_id, self.config['features']['name'])
@@ -125,6 +127,7 @@ class CrossValidation:
         }
         write_config(self.evaluation, self.paths.evaluation)
         write_config(self.config, self.paths.config)
+        write_keyframes(self.query_keys, self.paths.keyframes)
         
         print(f"R_threshold = {self.Rt_threshold[0]} || t_threshold = {self.Rt_threshold[1]}")        
         print(f"Translation err_t {query_id}-{ref_id} = {self.err_t}")

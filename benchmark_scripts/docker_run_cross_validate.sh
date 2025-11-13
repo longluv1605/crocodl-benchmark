@@ -58,7 +58,7 @@ fi
 # BENCHMARKING CONFIGURATION
 LOCATIONS=("ARCHE_D2")
 OUTPUT_DIR="long/benchmarking_results"
-QUERIES_FILE="keyframes_pruned_subsampled.txt"
+QUERIES_FILE="keyframes_original.txt"
 LOCAL_FEATURE_METHOD="superpoint"
 MATCHING_METHOD="lightglue"
 GLOBAL_FEATURE_METHOD="megaloc"

@@ -10,7 +10,7 @@
 
 OUTPUT_FILE="$1"
 OUTPUT_FILE=$(realpath "$OUTPUT_FILE")
-MATRIX="recall" # choose one: recall, err_R, acc_R
+MATRIX="err_R" # choose one: recall, err_R, acc_R
 
 if [ -z "$OUTPUT_FILE" ]; then
   echo "Usage: $0 path/to/output_file.txt"
