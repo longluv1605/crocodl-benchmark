@@ -43,6 +43,8 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
             print(f"[WARN] Reading image error: {pair}")
             continue
         
+        q_img = resize_to_screen(q_img)
+        m_img = resize_to_screen(m_img)
         ###################
         font = cv2.FONT_HERSHEY_SIMPLEX
         scale = 1.5
@@ -50,9 +52,9 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
         color = (0, 255, 255)
         
         (text_w, text_h), _ = cv2.getTextSize("Query", font, scale, thickness)
-        cv2.putText(q_img, "Query", (q_img.shape[1] - text_w - 20, 50), font, scale, color, thickness)
+        cv2.putText(q_img, "Query", (q_img.shape[1] - text_w - 20, q_img.shape[0] - text_h - 20), font, scale, color, thickness)
         (text_w, text_h), _ = cv2.getTextSize("Map", font, scale, thickness)
-        cv2.putText(m_img, "Map", (m_img.shape[1] - text_w - 20, 50), font, 1.2, color, thickness)
+        cv2.putText(m_img, "Map", (m_img.shape[1] - text_w - 20, q_img.shape[0] - text_h - 20), font, 1.2, color, thickness)
         ##################
 
         # Concat
@@ -63,7 +65,8 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
         canvas[:m_img.shape[0], q_img.shape[1]:q_img.shape[1]+m_img.shape[1]] = m_img
 
         err = float(pair[2])
-        text = f"[{i+1}/{len(pairs)}] Error: {err:.4f} | q=keep, x=del, esc=quit"
+        overlap = float(pair[4])
+        text = f"[{i+1}/{len(pairs)}] Error: {err:.4f} | Frustum Overlap: {overlap:.4f} | q=keep, x=del, esc=quit"
         cv2.putText(canvas, text, (30, 40),
                     font, 1, color, thickness)
 
@@ -95,8 +98,8 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
 ################
 capture = "/home/long/Workspace/crocodl-benchmark/capture"
 query_device = 'ios'
-map_device = 'spot'
-group = 'bad'
+map_device = 'ios'
+group = 'keep_trimesh_depth10.0_thresh0.2'
 PAIRS_PATH = f"/home/long/Workspace/crocodl-benchmark/notebooks/estimate_pose/{query_device}_query/{map_device}_map/{group}_pairs.txt"
 SAVE_DIR = f"/home/long/Workspace/crocodl-benchmark/notebooks/estimate_pose/{query_device}_query/{map_device}_map/{group}_filtered"
 
