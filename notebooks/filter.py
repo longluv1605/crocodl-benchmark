@@ -99,7 +99,9 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
 capture = "/home/long/Workspace/crocodl-benchmark/capture"
 query_device = 'ios'
 map_device = 'ios'
-group = 'keep_trimesh_depth10.0_thresh0.2'
+depth = 10.0
+thresh = 0.3
+group = f'keep_trimesh_depth{depth}_thresh{thresh}'
 PAIRS_PATH = f"/home/long/Workspace/crocodl-benchmark/notebooks/estimate_pose/{query_device}_query/{map_device}_map/{group}_pairs.txt"
 SAVE_DIR = f"/home/long/Workspace/crocodl-benchmark/notebooks/estimate_pose/{query_device}_query/{map_device}_map/{group}_filtered"
 
