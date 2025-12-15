@@ -16,10 +16,16 @@ def write_config(config, path):
     if not config: return
     with open(path, 'w') as fid:
         json.dump(config, fid, indent=4)
+        
+
+def read_keyframes(path):
+    return read_config(path)
 
 
-read_keyframes = read_config
-write_keyframes = write_config
+def write_keyframes(config, path):
+    write_config(config, path)
+
+
 def same_keyframes(keyframes, path):
     if not keyframes and not path.exists():
         return True

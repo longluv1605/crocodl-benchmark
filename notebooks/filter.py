@@ -34,7 +34,17 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
         key = ', '.join(pair)
         if key in reviewed:
             continue
-
+        
+        ####################
+        err = float(pair[2])
+        overlap = float(pair[4])
+        if overlap > 0.6:
+            print("Keep pair")
+            with open(keep_path, 'a') as f:
+                f.write(key + '\n')
+            continue
+        ####################
+        
         q_path = f"{capture}/ARCHE_D2/sessions/{query_device}_query/raw_data/{pair[0]}"
         m_path = f"{capture}/ARCHE_D2/sessions/{map_device}_map/raw_data/{pair[1]}"
         q_img = cv2.imread(q_path)
@@ -64,8 +74,8 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
         canvas[:q_img.shape[0], :q_img.shape[1]] = q_img
         canvas[:m_img.shape[0], q_img.shape[1]:q_img.shape[1]+m_img.shape[1]] = m_img
 
-        err = float(pair[2])
-        overlap = float(pair[4])
+        # err = float(pair[2])
+        # overlap = float(pair[4])
         text = f"[{i+1}/{len(pairs)}] Error: {err:.4f} | Frustum Overlap: {overlap:.4f} | q=keep, x=del, esc=quit"
         cv2.putText(canvas, text, (30, 40),
                     font, 1, color, thickness)
@@ -98,7 +108,7 @@ def filter_pairs(pairs, capture, query_device, map_device, save_dir):
 ################
 capture = "/home/long/Workspace/crocodl-benchmark/capture"
 query_device = 'ios'
-map_device = 'ios'
+map_device = 'spot'
 depth = 10.0
 thresh = 0.3
 group = f'keep_trimesh_depth{depth}_thresh{thresh}'
