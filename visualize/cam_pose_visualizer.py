@@ -121,9 +121,103 @@ def load_poses(poses_path, sensors_path, rigs_path=None, len=None, color=[255, 2
     
 
 class CamPoseVisualizer():
-    def __init__(self, scale = 0.01):
+    def __init__(self, scale = 0.01, axis_size=10.0, grid_size=20.0, grid_step=1.0, show_grid=True):
         self.scale = scale
+        self.axis_size = axis_size
+        self.grid_size = grid_size
+        self.grid_step = grid_step
+        self.show_grid = show_grid
         self.vis = o3d.visualization.Visualizer()
+
+    def _build_xy_grid(self):
+        # Build a lightweight XY grid centered at the origin to improve spatial perception.
+        if self.grid_step <= 0 or self.grid_size <= 0:
+            return None
+
+        points = []
+        lines = []
+
+        # Lines parallel to Y (vary X)
+        x_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        for x in x_vals:
+            points.append([x, -self.grid_size, 0.0])
+            points.append([x,  self.grid_size, 0.0])
+            lines.append([len(points) - 2, len(points) - 1])
+
+        # Lines parallel to X (vary Y)
+        y_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        base_idx = len(points)
+        for y in y_vals:
+            points.append([-self.grid_size, y, 0.0])
+            points.append([ self.grid_size, y, 0.0])
+            lines.append([base_idx, base_idx + 1])
+            base_idx += 2
+
+        grid = o3d.geometry.LineSet()
+        grid.points = o3d.utility.Vector3dVector(points)
+        grid.lines = o3d.utility.Vector2iVector(lines)
+        grid.colors = o3d.utility.Vector3dVector([[0.8, 0.8, 0.8] for _ in lines])
+        return grid
+
+    def _build_yz_grid(self):
+        # Grid on the YZ plane (x=0) to give an orthogonal reference.
+        if self.grid_step <= 0 or self.grid_size <= 0:
+            return None
+
+        points = []
+        lines = []
+
+        # Lines parallel to Z (vary Y)
+        y_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        for y in y_vals:
+            points.append([0.0, y, -self.grid_size])
+            points.append([0.0, y,  self.grid_size])
+            lines.append([len(points) - 2, len(points) - 1])
+
+        # Lines parallel to Y (vary Z)
+        z_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        base_idx = len(points)
+        for z in z_vals:
+            points.append([0.0, -self.grid_size, z])
+            points.append([0.0,  self.grid_size, z])
+            lines.append([base_idx, base_idx + 1])
+            base_idx += 2
+
+        grid = o3d.geometry.LineSet()
+        grid.points = o3d.utility.Vector3dVector(points)
+        grid.lines = o3d.utility.Vector2iVector(lines)
+        grid.colors = o3d.utility.Vector3dVector([[0.8, 0.8, 0.8] for _ in lines])
+        return grid
+
+    def _build_xz_grid(self):
+        # Grid on the XZ plane (y=0) for another orthogonal reference.
+        if self.grid_step <= 0 or self.grid_size <= 0:
+            return None
+
+        points = []
+        lines = []
+
+        # Lines parallel to Z (vary X)
+        x_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        for x in x_vals:
+            points.append([x, 0.0, -self.grid_size])
+            points.append([x, 0.0,  self.grid_size])
+            lines.append([len(points) - 2, len(points) - 1])
+
+        # Lines parallel to X (vary Z)
+        z_vals = np.arange(-self.grid_size, self.grid_size + 1e-6, self.grid_step)
+        base_idx = len(points)
+        for z in z_vals:
+            points.append([-self.grid_size, 0.0, z])
+            points.append([ self.grid_size, 0.0, z])
+            lines.append([base_idx, base_idx + 1])
+            base_idx += 2
+
+        grid = o3d.geometry.LineSet()
+        grid.points = o3d.utility.Vector3dVector(points)
+        grid.lines = o3d.utility.Vector2iVector(lines)
+        grid.colors = o3d.utility.Vector3dVector([[0.8, 0.8, 0.8] for _ in lines])
+        return grid
     
     def get_pose_matrix(self, q, t):
         q_xyzw = np.array([q['x'], q['y'], q['z'], q['w']])
@@ -249,9 +343,24 @@ class CamPoseVisualizer():
         
         opt = self.vis.get_render_option()
         opt.line_width = 10
-        opt.background_color = np.array([0, 0, 0])
-        axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1)
+        opt.background_color = np.array([255, 255, 255])
+
+        axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=self.axis_size)
         self.vis.add_geometry(axis)
+
+        if self.show_grid:
+            grid_xy = self._build_xy_grid()
+            if grid_xy is not None:
+                self.vis.add_geometry(grid_xy)
+
+            grid_yz = self._build_yz_grid()
+            if grid_yz is not None:
+                self.vis.add_geometry(grid_yz)
+
+            grid_xz = self._build_xz_grid()
+            if grid_xz is not None:
+                self.vis.add_geometry(grid_xz)
+
         self.vis.run()
         self.vis.clear_geometries()
         self.vis.destroy_window()
@@ -277,6 +386,12 @@ if __name__ == "__main__":
     parser.add_argument('--pair', action='append', nargs='+',
                         help='Query Map GT_poses EST_poses Sensors [Rigs]')
     parser.add_argument('--scale', type=float, default=0.1)
+    parser.add_argument('--axis-size', type=float, default=10.0, help='Length of the world-axis frame for easier orientation')
+    parser.add_argument('--grid-size', type=float, default=20.0, help='Half-extent of the grids (span -size..size)')
+    parser.add_argument('--grid-step', type=float, default=1.0, help='Spacing between grid lines')
+    parser.add_argument('--no-grid', action='store_true', help='Disable the XY grid overlay')
+    parser.add_argument('--no-yz-grid', action='store_true', help='Disable the YZ grid overlay')
+    parser.add_argument('--no-xz-grid', action='store_true', help='Disable the XZ grid overlay')
     parser.add_argument('--max_poses', type=int, default=None)
     
     args = parser.parse_args()
@@ -322,5 +437,13 @@ if __name__ == "__main__":
     print(f"\nTotal poses: {len(all_poses)}")
     print("Controls: Mouse=Rotate, Scroll=Zoom, Shift+Mouse=Pan, Q=Quit\n")
     
-    visualizer = CamPoseVisualizer(scale=args.scale)
+    visualizer = CamPoseVisualizer(
+        scale=args.scale,
+        axis_size=args.axis_size,
+        grid_size=args.grid_size,
+        grid_step=args.grid_step,
+        show_grid=not args.no_grid,
+        show_yz_grid=not args.no_yz_grid,
+        show_xz_grid=not args.no_xz_grid,
+    )
     visualizer.visualize(all_poses)

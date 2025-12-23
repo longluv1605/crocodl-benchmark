@@ -126,5 +126,7 @@ capture_tree.txt
 output.txt
 evaluation_results/
 test*.*
-notebooks/estimate_pose/
+notebooks/estimate_pose*
 notebooks/*dataset*
+notebooks/outputs
+test_superansac*
