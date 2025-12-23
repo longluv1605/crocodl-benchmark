@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import os
+import sys
 import numpy as np
 import cv2
 from tqdm import tqdm
@@ -29,12 +30,14 @@ def extract_frames_from_video(input_dir: Path, images_dir: Path):
         'ffmpeg',
         '-hide_banner', '-loglevel', 'warning', '-nostats',
         '-i', video_path.as_posix(),
-        '-vsync', '0',
+        '-fps_mode', "passthrough",
+        # '-vsync', '0',
         '-qmin', '1',
         '-q:v', '1',
         (images_dir / frames_format).as_posix(),
     ]
     subprocess.run(cmd, check=True)
+    print("ffmpeg -> Done")
 
     # Extract timestamps.
     cmd = [
@@ -42,24 +45,40 @@ def extract_frames_from_video(input_dir: Path, images_dir: Path):
         '-hide_banner', '-loglevel', 'warning',
         '-f', 'lavfi',
         '-i', f'movie={video_path.as_posix()}',
-        '-show_entries', 'frame=pkt_pts',
+        # '-show_entries', 'frame=pkt_pts',
+        # '-select_streams', 'v:0',
+        '-show_entries', 'frame=pts_time',
+        # '-show_entries', 'frame=best_effort_timestamp_time',
         '-of', 'csv=p=0',
+        # video_path.as_posix()
     ]
     result = subprocess.run(cmd,
                             check=True,
                             capture_output=True,
                             text=True)
+    print("ffprobe -> Done")
+    
     # Convert list of newline separated chars to list of strings.
-    timestamps = ''.join(result.stdout).split()
+    # timestamps = ''.join(result.stdout).split()
+    timestamps = [
+        int(round(float(x.rstrip(',')) * 1e6))
+        for x in result.stdout.splitlines()
+    ]
 
+    print(timestamps)
     # Extract time origin (timestamp of the first pose).
     poses = read_csv(input_dir / 'poses.txt')
+    print(len(poses), len(timestamps))
     assert len(poses) == len(timestamps)
     time_origin = int(poses[0][0])
+    print(time_origin)
 
+    # sys.exit(0)
+    
     # Rename all image data.
     for idx, timestamp in enumerate(timestamps):
         image_path = images_dir / (frames_format % (idx + 1))
+        # output_path = images_dir / (str(time_origin + int(timestamp)) + '.jpg')
         output_path = images_dir / (str(time_origin + int(timestamp)) + '.jpg')
         image_path.rename(output_path)
 
@@ -336,6 +355,7 @@ def phone_to_capture(input_path: Path,
         image_dir.mkdir(exist_ok=True, parents=True)
         logger.info('Extracting phone data')
         extract_frames_from_video(input_path, image_dir)
+        print("extract_frames_from_video -> Done")
     else:  # old format
         image_dir = input_path / 'images'
         assert image_dir.exists()
@@ -345,10 +365,12 @@ def phone_to_capture(input_path: Path,
         mlp = MeshlabProject()
 
     poses, cameras, rots90 = parse_pose_file(input_path / 'poses.txt')
+    print("parse_pose_file -> Done")
     if split_sequence_on_failure:
         chunks_timestamps = chunk_tracking_failures(poses)
         chunks_id_timestamps = [
             (f'{session_id}_{i:03}', t) for i, t in enumerate(chunks_timestamps)]
+        print("split_sequence_on_failure -> Done")
     else:
         chunks_id_timestamps = [(session_id, sorted(poses.keys()))]
     chunk_ids = []
@@ -367,6 +389,7 @@ def phone_to_capture(input_path: Path,
                 camera = session.sensors[camera_id]
                 mlp.add_camera(f'{ts}/{camera_id}', camera, pose)
                 mlp.add_trajectory_point(chunk_id, pose)
+        print("chunk_id -> Done")
 
     capture.save(capture.path, session_ids=chunk_ids)
     if visualize:
