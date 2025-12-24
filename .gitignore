@@ -130,3 +130,5 @@ notebooks/estimate_pose*
 notebooks/*dataset*
 notebooks/outputs
 test_superansac*
+build_map/output*
+build_map/poses.txt

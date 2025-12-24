@@ -1,0 +1,25 @@
+/home/long/Workspace/crocodl-benchmark/capture/UET_G2/raw/phone/2025-12-22_16.43.15
+├── accelerometer.txt
+├── bluetooth.txt
+├── depth
+│   ├── 81283349204.bin
+│   ├── 81283349204.confidence.png
+│   ├── 81283449218.bin
+│   ├── 81283449218.confidence.png
+│   ├── 81283549233.bin
+│   ├── 81283549233.confidence.png
+│   ├── 81671389023.bin
+│   └── 81671389023.confidence.png
+├── frames
+│   ├── 81283349204.jpg
+│   ├── 81283449218.jpg
+│   ├── 81283549233.jpg
+│   └── 81671389023.jpg
+├── fused_imu.txt
+├── gyroscope.txt
+├── images.mp4
+├── location.txt
+├── magnetometer.txt
+└── sensors.txt
+
+3 directories, 11618 files
