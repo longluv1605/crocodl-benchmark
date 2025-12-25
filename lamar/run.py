@@ -13,7 +13,7 @@ from lamar.utils.capture import (
     rig_list_to_image_list, rig_poses_to_image_poses)
 
 from lamar import logger
-
+import time
 
 def run(outputs: Path,
         capture: Capture,
@@ -86,17 +86,34 @@ def run(outputs: Path,
         query_list, query_chunks = build_chunks(
             capture, query_id, query_list, sequence_length_seconds)
         image_keys = keys_from_chunks(query_chunks)
-
+    
+    st = time.time()
     extraction_map = FeatureExtraction(outputs, capture, ref_id, configs['extraction'])
+    en = time.time()
+    print(f"Extract map time = {(en-st):.4f} secs.")
+    
+    st = time.time()
     pairs_map = PairSelection(outputs, capture, ref_id, ref_id, configs['pairs_map'])
+    en = time.time()
+    print(f"Select map time = {(en-st):.4f} secs.")
+    
+    st = time.time()
     matching_map = FeatureMatching(
         outputs, capture, ref_id, ref_id, configs['matching'], pairs_map, extraction_map)
+    en = time.time()
+    print(f"Match map time = {(en-st):.4f} secs.")
 
+    st = time.time()
     mapping = Mapping(
         configs['mapping'], outputs, capture, ref_id, extraction_map, matching_map)
+    en = time.time()
+    print(f"Mapping time = {(en-st):.4f} secs.")
 
+    st = time.time()
     extraction_query = FeatureExtraction(
         outputs, capture, query_id, configs['extraction'], image_keys)
+    en = time.time()
+    print(f"Extract query time = {(en-st):.4f} secs.")
 
     if is_sequential:
         query_list, query_chunks = avoid_duplicate_keys_in_chunks(
@@ -113,15 +130,28 @@ def run(outputs: Path,
         T_c2w_gt = session_q.proc.alignment_trajectories
         if T_c2w_gt and is_rig and not do_rig:
             T_c2w_gt = rig_poses_to_image_poses(rig_query_list, T_c2w_gt, session_q)
+        
+        st = time.time()
         pairs_loc = PairSelection(
             outputs, capture, query_id, ref_id, configs['pairs_loc'], query_list,
             query_poses=T_c2w_gt)
+        en = time.time()
+        print(f"Select query time = {(en-st):.4f} secs.")
+        
+        st = time.time()
         matching_query = FeatureMatching(
             outputs, capture, query_id, ref_id, configs['matching_query'],
             pairs_loc, extraction_query, extraction_map)
+        en = time.time()
+        print(f"Match query time = {(en-st):.4f} secs.")
+        
+        st = time.time()
         pose_estimation = PoseEstimation(
             configs['poses'], outputs, capture, query_id,
             extraction_query, matching_query, mapping, query_list)
+        en = time.time()
+        print(f"Estimate pose time = {(en-st):.4f} secs.")
+        
         if T_c2w_gt:
             results = pose_estimation.evaluate(T_c2w_gt)
         else:
