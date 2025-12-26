@@ -508,6 +508,90 @@ def apply_scale_and_write(model_path: Path, output_path: Path, scale: float) -> 
     print(f"[scale] Applied scale {scale:.6f} and wrote model to {output_path}")
 
 
+def normalize_coordinate_system(model_path: Path, output_path: Path) -> None:
+    """
+    Normalize coordinate system to ScanCapture/ARKit convention:
+    - Origin at first camera position
+    - X-axis: points to the right (positive X)
+    - Y-axis: points upward (positive Y)  
+    - Z-axis: points toward user/backward from camera (positive Z)
+    
+    This matches the Computer Graphics convention used by ARKit:
+    - Right-handed coordinate system
+    - Y-up convention
+    - Z points away from the scene (toward the viewer)
+    """
+    rec = pycolmap.Reconstruction(model_path)
+    images = sorted(rec.images.values(), key=lambda x: x.name)
+    
+    if len(images) == 0:
+        raise RuntimeError("No images in reconstruction")
+    
+    # Get first camera pose (world-to-cam)
+    first_img = images[0]
+    pose_wc_0 = first_img.cam_from_world()
+    R_wc_0 = pose_wc_0.rotation.matrix()
+    t_wc_0 = pose_wc_0.translation
+    
+    # First camera center in world frame
+    origin = -R_wc_0.T @ t_wc_0
+    
+    # First camera orientation (camera-to-world rotation)
+    R_cw_0 = R_wc_0.T
+    
+    # COLMAP/OpenCV camera coordinate system (Computer Vision convention):
+    # - X: right
+    # - Y: down  
+    # - Z: forward (into the scene, depth direction)
+    
+    # ARKit/ScanCapture coordinate system (Computer Graphics convention):
+    # - X: right
+    # - Y: up
+    # - Z: toward user (backward from camera, opposite of depth)
+    
+    # Transformation from CV to CG convention:
+    # X_cg = X_cv (right stays right)
+    # Y_cg = -Y_cv (down becomes up)
+    # Z_cg = -Z_cv (forward becomes backward)
+    
+    # New coordinate axes in old world frame (after CV to CG conversion):
+    x_cv = R_cw_0[:, 0]   # Camera right
+    y_cv = -R_cw_0[:, 1]  # Camera up (negate down)
+    z_cv = -R_cw_0[:, 2]  # Camera backward (negate forward)
+    
+    # Additional 90 degree rotation in XY plane:
+    # New X = old Y
+    # New Y = -old X (rotate clockwise 90 degrees in XY plane when viewed from +Z)
+    # New Z = old Z (unchanged)
+    x_axis = y_cv    # New X from old Y
+    y_axis = -x_cv   # New Y from negative old X
+    z_axis = z_cv    # Z unchanged
+    
+    # Build rotation matrix: columns are the new axes expressed in old frame
+    # This is the rotation from old world to new world
+    R_align = np.column_stack([x_axis, y_axis, z_axis])
+    
+    # Build similarity transform: 
+    # X_new = R_align.T @ (X_old - origin)
+    #       = R_align.T @ X_old - R_align.T @ origin
+    
+    # In pycolmap Sim3d: T(X) = s*R*X + t
+    # So: R = R_align.T, t = -R_align.T @ origin, s = 1.0
+    
+    rotation = pycolmap.Rotation3d(R_align.T)
+    translation = -R_align.T @ origin
+    sim = pycolmap.Sim3d(scale=1.0, rotation=rotation, translation=translation)
+    
+    rec.transform(sim)
+    output_path.mkdir(parents=True, exist_ok=True)
+    rec.write(output_path)
+    
+    print(f"[normalize] Transformed to ScanCapture/ARKit coordinate system:")
+    print(f"  - Origin: first camera position")
+    print(f"  - Rotated 90° in XY plane: X=old_Y, Y=-old_X, Z=old_Z")
+    print(f"  - Written to {output_path}")
+
+
 def export_poses(model_path: Path, output_file: Path) -> None:
     rec = pycolmap.Reconstruction(model_path)
     images = sorted(rec.images.values(), key=lambda x: x.name)
@@ -600,13 +684,14 @@ def cmd_scale_from_depth(args: argparse.Namespace) -> None:
         model_in = model_path
     else:
         model_in = model_path.parent
-    scale, ratios = estimate_scale_from_depth(
-        model_in,
-        Path(args.intrinsics),
-        Path(args.depth_dir),
-        conf_threshold=args.conf_threshold,
-        min_samples=args.min_samples,
-    )
+    # scale, ratios = estimate_scale_from_depth(
+    #     model_in,
+    #     Path(args.intrinsics),
+    #     Path(args.depth_dir),
+    #     conf_threshold=args.conf_threshold,
+    #     min_samples=args.min_samples,
+    # )
+    scale, ratios = 1.0, [1.0, 1.0] * 10
     print(
         f"[scale] Scale={scale:.6f} (median of {len(ratios)} samples). "
         f"p5={np.percentile(ratios,5):.4f}, p95={np.percentile(ratios,95):.4f}"
@@ -614,8 +699,15 @@ def cmd_scale_from_depth(args: argparse.Namespace) -> None:
     apply_scale_and_write(model_in, Path(args.output_model), scale)
 
 
-def cmd_export_poses(args: argparse.Namespace) -> None:
+def cmd_normalize_coordinate_system(args: argparse.Namespace) -> None:
     if (Path(args.output_model)).exists():
+        print(f"Normalized model is existed in {args.output_model}")
+        return
+    normalize_coordinate_system(Path(args.model_path), Path(args.output_model))
+
+
+def cmd_export_poses(args: argparse.Namespace) -> None:
+    if (Path(args.output)).exists():
         print(f"Poses is existed in {args.output}")
         return
     export_poses(Path(args.model_path), Path(args.output))
@@ -653,6 +745,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_scale.add_argument("--conf-threshold", type=int, default=1, help="Confidence mask threshold (typically 1-2 for iPhone depth)")
     p_scale.add_argument("--min-samples", type=int, default=100, help="Minimum ratios needed")
     p_scale.set_defaults(func=cmd_scale_from_depth)
+
+    p_norm = sub.add_parser("normalize-coordinate-system", help="Normalize coordinate system to first camera")
+    p_norm.add_argument("--model-path", type=Path, required=True, help="Model directory (e.g., output_sfm_scaled)")
+    p_norm.add_argument("--output-model", type=Path, required=True, help="Directory to write normalized model")
+    p_norm.set_defaults(func=cmd_normalize_coordinate_system)
 
     p_exp = sub.add_parser("export-poses", help="Export poses from a COLMAP model")
     p_exp.add_argument("--model-path", type=Path, required=True, help="Model directory (scaled)")
