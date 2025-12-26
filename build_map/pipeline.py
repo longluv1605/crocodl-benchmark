@@ -562,6 +562,9 @@ def export_poses(model_path: Path, output_file: Path) -> None:
 # ----------------------------
 
 def cmd_select_keyframes(args: argparse.Namespace) -> None:
+    if Path(args.output_root).exists():
+        print(f"Keyframes is existed in {args.output_root}")
+        return
     samples = build_frame_samples(Path(args.session_root))
     selected = select_keyframes(samples, stride=args.stride)
     materialize_keyframes(selected, Path(args.output_root), copy_mode=args.copy_mode)
@@ -569,10 +572,16 @@ def cmd_select_keyframes(args: argparse.Namespace) -> None:
 
 
 def cmd_create_db(args: argparse.Namespace) -> None:
+    if (Path(args.database)).exists():
+        print(f"Database is existed in {args.database}")
+        return
     create_colmap_db(Path(args.keyframes_root), Path(args.database))
 
 
 def cmd_run_sfm(args: argparse.Namespace) -> None:
+    if (Path(args.output_model)).exists():
+        print(f"SFM outputs is exists in {args.output_model}")
+        return
     run_colmap_cli(
         database_path=Path(args.database),
         image_path=Path(args.image_path),
@@ -583,6 +592,9 @@ def cmd_run_sfm(args: argparse.Namespace) -> None:
 
 
 def cmd_scale_from_depth(args: argparse.Namespace) -> None:
+    if (Path(args.output_model)).exists():
+        print(f"Depth-by scaled outputs is existed in {args.output_model}")
+        return
     model_path = Path(args.model_path)
     if model_path.is_dir():
         model_in = model_path
@@ -603,6 +615,9 @@ def cmd_scale_from_depth(args: argparse.Namespace) -> None:
 
 
 def cmd_export_poses(args: argparse.Namespace) -> None:
+    if (Path(args.output_model)).exists():
+        print(f"Poses is existed in {args.output}")
+        return
     export_poses(Path(args.model_path), Path(args.output))
 
 

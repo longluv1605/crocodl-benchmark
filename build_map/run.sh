@@ -1,8 +1,10 @@
 SESSION=capture/UET_G2/raw/phone/2025-12-22_16.43.15
-KF_OUT=build_map/output_keyframes
-SFM_OUT=build_map/output_sfm
-SFM_SCALED=build_map/output_sfm_scaled
-POSES=build_map/poses.txt
+OUT_DIR=build_map/outputs
+RUN_DIR=$OUT_DIR/run_no_rescale
+KF_OUT=$OUT_DIR/output_keyframes
+SFM_OUT=$RUN_DIR/output_sfm
+SFM_SCALED=$RUN_DIR/output_sfm_scaled
+POSES=$RUN_DIR/poses.txt
 
 # 1) Chọn keyframe + copy/symlink dữ liệu cần thiết
 python build_map/pipeline.py select-keyframes \
@@ -22,12 +24,12 @@ python build_map/pipeline.py run-sfm \
   --output-model $SFM_OUT \
   --colmap-bin colmap
 
-# 4) Ước lượng scale từ depth, ghi model mới
-python build_map/pipeline.py scale-from-depth \
-  --model-path $SFM_OUT/0 \
-  --intrinsics $KF_OUT/intrinsics.json \
-  --depth-dir $KF_OUT/depth \
-  --output-model $SFM_SCALED
+# # 4) Ước lượng scale từ depth, ghi model mới
+# python build_map/pipeline.py scale-from-depth \
+#   --model-path $SFM_OUT/0 \
+#   --intrinsics $KF_OUT/intrinsics.json \
+#   --depth-dir $KF_OUT/depth \
+#   --output-model $SFM_SCALED
 
 # 5) Xuất poses (camera-to-world, quaternion qx qy qz qw)
 python3 build_map/pipeline.py export-poses \
