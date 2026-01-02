@@ -94,7 +94,7 @@ def load_generated_poses(poses_path, sensors_path, rigs_path=None, len=None, col
 
 
 if __name__ == "__main__":
-    poses_path = "/home/long/Workspace/crocodl-benchmark/build_map/outputs/run_no_rescale_normalized/poses.txt"
+    poses_path = "/home/long/Workspace/VNU-AR/capture/UET-G2/mapping_poses.txt"
     sensors_path = "/home/long/Workspace/crocodl-benchmark/capture/UET_G2/raw/phone/2025-12-22_16.43.15/sensors.txt"
     poses = load_generated_poses(poses_path, sensors_path, rigs_path=None, len=None, color=[255, 0, 0])
     

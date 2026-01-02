@@ -303,11 +303,15 @@ def run_colmap_cli(
     ]
     match_cmd = [
         colmap_bin,
-        "sequential_matcher",
+        "vocab_tree_matcher",
         "--database_path",
         str(database_path),
         "--SequentialMatching.overlap",
-        "4",
+        "10",
+        "--SequentialMatching.loop_detection",
+        "1",
+        "--SequentialMatching.vocab_tree_path",
+        "",
         "--SiftMatching.use_gpu",
         "1" if use_gpu else "0",
     ]
